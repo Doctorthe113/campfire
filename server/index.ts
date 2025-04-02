@@ -10,16 +10,25 @@
 
 import { Database } from "bun:sqlite";
 import type { BunRequest } from "bun";
+import { randomUUIDv7 } from "bun";
 
-//*===================================== UTILS ========================================
+//*===================================== TYPES ========================================
 // message type
 type Message = {
-    id: number;
+    id: string;
     user: string;
     guild: string;
     content: string;
     timestamp: string;
 };
+
+//*===================================== UTILS ========================================
+
+function isValidUUIDv7(uuid: string) {
+    const uuidv7Regex =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+    return uuidv7Regex.test(uuid);
+}
 
 // database class with helper functions
 class DB {
@@ -27,17 +36,18 @@ class DB {
     messagesBuffer: Array<Message> = [];
     interval: Timer;
 
+    // initialize database and starts the timer
     constructor(path: string) {
         this.db = new Database(path);
         this.db.exec("PRAGMA journal_mode = WAL;");
         // create messages table
         try {
             this.db.run(`CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id TEXT PRIMARY KEY NOT NULL,
                 user TEXT NOT NULL,
                 guild TEXT NOT NULL,
-                message TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                content TEXT NOT NULL,
+                timestamp DATETIME
             )`);
         } catch (error) {
             console.error(`Error creating table: ${error}`);
@@ -48,26 +58,54 @@ class DB {
         }, 10000);
     }
 
+    // insert messages to database perodically
     private async insert_to_db() {
         if (this.messagesBuffer.length === 0) {
             return;
         }
 
         const insertStatment = this.db.prepare(
-            "INSERT INTO messages (user, message) VALUES (?, ?)",
+            "INSERT INTO messages (id, user, guild, content, timestamp) VALUES (?, ?, ?, ?, ?)",
         );
 
         this.db.transaction(() => {
             this.messagesBuffer.map((msg) => {
-                insertStatment.run(msg.user, msg.content);
+                insertStatment.run(
+                    msg.id,
+                    msg.user,
+                    msg.guild,
+                    msg.content,
+                    msg.timestamp,
+                );
             });
         })();
 
         this.messagesBuffer = [];
     }
 
+    // add message to buffer, exposed to the pub
     upload_message(msg: Message) {
         this.messagesBuffer.push(msg);
+    }
+
+    // get old messages from database
+    async get_messages(guild: string, page: number, pageSize: number = 50) {
+        if (isValidUUIDv7(guild) === false) {
+            return [];
+        }
+
+        const getMessagesStatement = this.db.query(`
+            SELECT id, user, guild, content, timestamp
+            FROM messages
+            WHERE guild = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+            OFFSET ?
+        `);
+
+        const offset = (page - 1) * pageSize;
+        const messages = getMessagesStatement.all(guild, pageSize, offset);
+        return messages.reverse();
     }
 
     close_db() {
@@ -94,12 +132,17 @@ async function handle_new_message(req: BunRequest) {
     }
 
     const { user, guild, content } = await req.json();
+    const id: string = randomUUIDv7();
+    const timestamp: string = new Date().toISOString().slice(0, 19).replace(
+        "T",
+        " ",
+    );
     const message: Message = {
-        id: 0,
+        id: id,
         user: user,
         guild: guild,
         content: content,
-        timestamp: "",
+        timestamp: timestamp,
     };
     db.upload_message(message);
 
@@ -112,6 +155,25 @@ async function handle_new_message(req: BunRequest) {
     });
 }
 
+// for handling getting messages from database
+async function handle_get_messages(req: BunRequest) {
+    if (req.method === "OPTIONS") {
+        return new Response(null, {
+            status: 204,
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST",
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
+        });
+    }
+
+    const { page, pageSize, guild } = await req.json();
+
+    const messages = await db.get_messages(guild, page, pageSize);
+    return new Response(JSON.stringify(messages));
+}
+
 // for handling sending events to clients
 async function handle_sse(req: BunRequest) {
     const sseHeaders = {
@@ -121,8 +183,10 @@ async function handle_sse(req: BunRequest) {
         "Access-Control-Allow-Origin": "*",
     };
 
+    // get guild id from the url
+    const guildId = req.url.split("/").pop();
+
     // to track of events and messages sent
-    let eventId = 0;
     let intervalId: Timer;
     let msgIndex = Math.max(0, db.messagesBuffer.length - 1);
 
@@ -130,30 +194,35 @@ async function handle_sse(req: BunRequest) {
     const stream: ReadableStream = new ReadableStream({
         start(controller) {
             const sendUpdate = () => {
-                // this makes sure that user only receives new messages after subbing
-                if (msgIndex >= db.messagesBuffer.length) {
-                    return;
-                }
                 if (db.messagesBuffer.length === 0) {
+                    msgIndex = 0;
+
                     return;
                 }
 
-                const data = db.messagesBuffer[msgIndex];
-                const streamData = `id: ${eventId}\ndata: ${data.content}\n\n`;
-                eventId++;
-                msgIndex++;
+                while (msgIndex <= db.messagesBuffer.length - 1) {
+                    const data: Message = db.messagesBuffer[msgIndex];
 
-                controller.enqueue(
-                    new TextEncoder().encode(streamData),
-                );
+                    // this makes sure that user only receives messages for the guild
+                    if (guildId !== data.guild) {
+                        msgIndex++;
+                        return;
+                    }
+
+                    const streamData = `data: ${JSON.stringify(data)}\n\n`;
+                    msgIndex++;
+
+                    controller.enqueue(
+                        new TextEncoder().encode(streamData),
+                    );
+                }
             };
 
-            // timer to send updates every 200 ms
-            intervalId = setInterval(sendUpdate, 200);
+            // timer to send updates every 50 ms
+            intervalId = setInterval(sendUpdate, 50);
         },
         cancel() {
             clearInterval(intervalId);
-            console.log("Stream cancelled");
         },
     });
 
@@ -163,12 +232,11 @@ async function handle_sse(req: BunRequest) {
 //*=============================== SERVER RELATED =====================================
 // starts server
 const server = Bun.serve({
-    port: 3000,
+    port: 5000,
     idleTimeout: 0,
     routes: {
         "/send/": handle_new_message,
-        "/events": handle_sse,
+        "/events/:guildId": handle_sse,
+        "/receive/": handle_get_messages,
     },
 });
-
-console.log(`Listening on http://localhost:${server.port}`);
