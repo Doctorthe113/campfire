@@ -1,242 +1,462 @@
-/*
-    @Author: doctorthe113
-    @date: 2025-03-17
-
-    @description:
-        a http server in bun js from scratch to learn about server side events, sql,
-        sqlite, typescript, and how servers work in general
-
-*/
-
-import { Database } from "bun:sqlite";
-import type { BunRequest } from "bun";
 import { randomUUIDv7 } from "bun";
+import type { BunRequest } from "bun";
+import { password as pass } from "bun";
+import { jwtVerify, SignJWT } from "jose";
+import Database from "./utils/db_handle";
 
 //*===================================== TYPES ========================================
 // message type
 type Message = {
     id: string;
-    user: string;
+    author_id: string;
+    author_name: string;
     guild: string;
     content: string;
-    timestamp: string;
+    created_at: string;
 };
 
-//*===================================== UTILS ========================================
+type User = {
+    id: string;
+    username: string;
+    email: string;
+    password: string;
+    avatar: string;
+    created_at: string;
+};
 
-function isValidUUIDv7(uuid: string) {
-    const uuidv7Regex =
-        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
-    return uuidv7Regex.test(uuid);
-}
+type Guild = {
+    id: string;
+    name: string;
+    owner: string;
+    created_at: string;
+};
 
-// database class with helper functions
-class DB {
-    db: Database;
-    messagesBuffer: Array<Message> = [];
-    interval: Timer;
+//*======================================= Utils ========================================
+function create_jwt(userEmail: string, userId: string) {
+    try {
+        const encoder = new TextEncoder();
+        const secretKey = encoder.encode(Bun.env.JWT_KEY);
 
-    // initialize database and starts the timer
-    constructor(path: string) {
-        this.db = new Database(path);
-        this.db.exec("PRAGMA journal_mode = WAL;");
-        // create messages table
-        try {
-            this.db.run(`CREATE TABLE IF NOT EXISTS messages (
-                id TEXT PRIMARY KEY NOT NULL,
-                user TEXT NOT NULL,
-                guild TEXT NOT NULL,
-                content TEXT NOT NULL,
-                timestamp DATETIME
-            )`);
-        } catch (error) {
-            console.error(`Error creating table: ${error}`);
-        }
+        const jwt = new SignJWT({ email: userEmail, id: userId })
+            .setIssuedAt()
+            .setProtectedHeader({ alg: "HS256" })
+            .sign(secretKey);
 
-        this.interval = setInterval(() => {
-            this.insert_to_db();
-        }, 10000);
-    }
-
-    // insert messages to database perodically
-    private async insert_to_db() {
-        if (this.messagesBuffer.length === 0) {
-            return;
-        }
-
-        const insertStatment = this.db.prepare(
-            "INSERT INTO messages (id, user, guild, content, timestamp) VALUES (?, ?, ?, ?, ?)",
-        );
-
-        this.db.transaction(() => {
-            this.messagesBuffer.map((msg) => {
-                insertStatment.run(
-                    msg.id,
-                    msg.user,
-                    msg.guild,
-                    msg.content,
-                    msg.timestamp,
-                );
-            });
-        })();
-
-        this.messagesBuffer = [];
-    }
-
-    // add message to buffer, exposed to the pub
-    upload_message(msg: Message) {
-        this.messagesBuffer.push(msg);
-    }
-
-    // get old messages from database
-    async get_messages(guild: string, page: number, pageSize: number = 50) {
-        if (isValidUUIDv7(guild) === false) {
-            return [];
-        }
-
-        const getMessagesStatement = this.db.query(`
-            SELECT id, user, guild, content, timestamp
-            FROM messages
-            WHERE guild = ?
-            ORDER BY timestamp DESC
-            LIMIT ?
-            OFFSET ?
-        `);
-
-        const offset = (page - 1) * pageSize;
-        const messages = getMessagesStatement.all(guild, pageSize, offset);
-        return messages.reverse();
-    }
-
-    close_db() {
-        this.db.close();
-        clearInterval(this.interval);
+        return jwt;
+    } catch (error) {
+        console.log("Error creating JWT:", error);
+        throw error;
     }
 }
 
-// initialize database
-const db = new DB("./db/chatapp.sqlite");
+async function verify_jwt(token: string) {
+    try {
+        const encoder = new TextEncoder();
+        const secretKey = encoder.encode(Bun.env.JWT_KEY);
 
-//*=============================== HANDLER FUNCTIONS ==================================
-// for handling new message inputs
-async function handle_new_message(req: BunRequest) {
-    if (req.method === "OPTIONS") {
-        return new Response(null, {
-            status: 204,
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
+        const { payload, protectedHeader } = await jwtVerify(token, secretKey, {
+            algorithms: ["HS256"],
         });
-    }
 
-    const { user, guild, content } = await req.json();
+        return payload;
+    } catch (error) {
+        console.log("Error verifying JWT:", error);
+        throw error;
+    }
+}
+
+async function verify_auth(req: BunRequest) {
+    //@ts-expect-error
+    const cookies = req.cookies;
+
+    const token = cookies.get("session") as string;
+    const userId = cookies.get("user_id") as string;
+    const email = cookies.get("user_email") as string;
+
+    const payload = await verify_jwt(token);
+
+    if (payload.id == userId && payload.email == email) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function handle_preflight(origin: string) {
+    return new Response(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Origin": origin,
+        },
+    });
+}
+
+function corsResponse(
+    origin: string,
+    message: string | object | null,
+    status: number,
+) {
+    if (typeof message === "object") {
+        message = JSON.stringify(message);
+    }
+    return new Response(message as string, {
+        status: status,
+        headers: {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Headers": "Content-Type",
+        },
+    });
+}
+//*==================================== DATABASE ========================================
+// initialize database
+const db = new Database("./db/chatapp.sqlite");
+//*================================= REQUEST HANDLER ====================================
+
+function handle_msg_upload(msg: Message) {
     const id: string = randomUUIDv7();
-    const timestamp: string = new Date().toISOString().slice(0, 19).replace(
-        "T",
-        " ",
-    );
+    const timestamp: string = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
     const message: Message = {
         id: id,
-        user: user,
-        guild: guild,
-        content: content,
-        timestamp: timestamp,
+        author_id: msg.author_id,
+        author_name: msg.author_name,
+        guild: msg.guild,
+        content: msg.content,
+        created_at: timestamp,
     };
+
     db.upload_message(message);
 
-    return new Response(null, {
-        status: 200,
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Content-Type": "application/json",
-        },
-    });
+    return message;
 }
 
-// for handling getting messages from database
+// get - has auth
+// http://0.0.0.0:5000/grab_old_msgs?guild_id=x&page=x&page_size=x
 async function handle_get_messages(req: BunRequest) {
-    if (req.method === "OPTIONS") {
-        return new Response(null, {
-            status: 204,
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
-        });
+    const origin = req.headers.get("Origin") as string;
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "Unauthorized", 401);
     }
 
-    const { page, pageSize, guild } = await req.json();
+    const url = new URL(req.url);
+    const guildId = url.searchParams.get("guild_id") as string;
+    const page = url.searchParams.get("page") as string || "1";
+    const pageSize = url.searchParams.get("page_size") as string || "50";
 
-    const messages = await db.get_messages(guild, page, pageSize);
-    return new Response(JSON.stringify(messages));
+    const messages = db.get_old_messages(
+        guildId,
+        Number(page),
+        Number(pageSize),
+    );
+
+    return corsResponse(origin, messages, 200);
 }
 
-// for handling sending events to clients
-async function handle_sse(req: BunRequest) {
-    const sseHeaders = {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "Keep-Alive",
-        "Access-Control-Allow-Origin": "*",
+// get - has auth(only using email and user id)
+async function handle_ws(req: BunRequest) {
+    const url = new URL(req.url);
+    const guildId = url.searchParams.get("guild_id") as string;
+    const token = url.searchParams.get("token") as string;
+    const userId = url.searchParams.get("user_id") as string;
+
+    const payload = await verify_jwt(token);
+
+    if (payload.id == userId) {
+    } else {
+        return corsResponse("*", "User is not authorized", 401);
+    }
+
+    if (!db.check_user_is_in_guild({ user_id: userId, guild_id: guildId })) {
+        return corsResponse("*", "User is not in guild", 403);
+    }
+
+    if (
+        server.upgrade(req, {
+            data: {
+                guild_id: guildId,
+            },
+        })
+    ) {
+    }
+    return corsResponse("*", "ws failed", 200);
+}
+
+// post
+async function handle_login(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    // preflight
+    if (req.method === "OPTIONS") {
+        return handle_preflight(origin);
+    }
+
+    // @ts-ignore
+    const cookies = req.cookies;
+    const { email, password } = await req.json();
+
+    // gets user information
+    const user: User = db.get_user(email);
+
+    // early return
+    if (!Boolean(user)) {
+        return corsResponse(origin, "User does not exist", 404);
+    }
+
+    // checks password hash
+    const isPasswordValid = await pass.verify(password, user.password);
+
+    if (!isPasswordValid) {
+        return corsResponse(origin, "Invalid password", 401);
+    }
+
+    // create jwt, set cookie, and return
+    const token = await create_jwt(user.email, user.id);
+    cookies.set("session", token, {
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+        path: "/",
+        expires: new Date(Date.now() + 86400000),
+        sameSite: "lax",
+    });
+    cookies.set("user_id", user.id);
+    cookies.set("user_email", user.email);
+    cookies.set("username", user.username);
+
+    return corsResponse(origin, null, 200);
+}
+
+// post
+async function handle_register(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    // preflight
+    if (req.method === "OPTIONS") {
+        return handle_preflight(origin);
+    }
+
+    // @ts-ignore
+    const cookies = req.cookies;
+    const { username, email, password } = await req.json();
+
+    // hashes the password
+    const hashedPassword = await pass.hash(password);
+
+    // user object
+    const user: User = {
+        id: randomUUIDv7(),
+        username: username,
+        email: email,
+        password: hashedPassword,
+        avatar: "",
+        created_at: new Date().toISOString().slice(0, 19).replace("T", " "),
     };
 
-    // get guild id from the url
-    const guildId = req.url.split("/").pop();
+    try {
+        db.create_user(user);
+        const token = await create_jwt(user.email, user.id);
+        cookies.set("session", token, {
+            maxAge: 60 * 60 * 24 * 7,
+            httpOnly: true,
+            path: "/",
+            expires: new Date(Date.now() + 86400000),
+            sameSite: "lax",
+        });
+        cookies.set("user_id", user.id);
+        cookies.set("user_email", user.email);
+        cookies.set("username", user.username);
 
-    // to track of events and messages sent
-    let intervalId: Timer;
-    let msgIndex = Math.max(0, db.messagesBuffer.length - 1);
-
-    // stream for sse
-    const stream: ReadableStream = new ReadableStream({
-        start(controller) {
-            const sendUpdate = () => {
-                if (db.messagesBuffer.length === 0) {
-                    msgIndex = 0;
-
-                    return;
-                }
-
-                while (msgIndex <= db.messagesBuffer.length - 1) {
-                    const data: Message = db.messagesBuffer[msgIndex];
-
-                    // this makes sure that user only receives messages for the guild
-                    if (guildId !== data.guild) {
-                        msgIndex++;
-                        return;
-                    }
-
-                    const streamData = `data: ${JSON.stringify(data)}\n\n`;
-                    msgIndex++;
-
-                    controller.enqueue(
-                        new TextEncoder().encode(streamData),
-                    );
-                }
-            };
-
-            // timer to send updates every 50 ms
-            intervalId = setInterval(sendUpdate, 50);
-        },
-        cancel() {
-            clearInterval(intervalId);
-        },
-    });
-
-    return new Response(stream, { headers: sseHeaders });
+        return corsResponse(origin, "User created", 200);
+    } catch (error) {
+        console.log(error);
+        return corsResponse(origin, "User already exists", 400);
+    }
 }
 
-//*=============================== SERVER RELATED =====================================
-// starts server
+// get
+// http://0.0.0.0:5000/logout`
+async function handle_logout(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+    //@ts-ignore
+    const cookies = req.cookies;
+    cookies.delete("session");
+    cookies.delete("user_id");
+    cookies.delete("user_email");
+    return corsResponse(origin, "User logged out", 200);
+}
+
+// get - validates the token for nextjs
+// http://localhost:5000/validate_auth?token=x&user_id=x&user_email=x
+async function handle_validate_auth(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token") as string;
+    const userId = url.searchParams.get("user_id") as string;
+    const email = url.searchParams.get("user_email") as string;
+
+    const payload = await verify_jwt(token);
+
+    if (payload.id == userId && payload.email == email) {
+        return corsResponse(origin, "Token is valid", 200);
+    } else {
+        return corsResponse(origin, "Token is invalid", 403);
+    }
+}
+
+// get - for checking if user is in guild - for nextjs
+// http://localhost:5000/validate_user_in_guild?user_id=x&guild_id=x
+async function handle_check_user_is_in_guild(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const url = new URL(req.url);
+    const user_id = url.searchParams.get("user_id") as string;
+    const guild_id = url.searchParams.get("guild_id") as string;
+
+    const isUserInGuild = db.check_user_is_in_guild({
+        user_id: user_id,
+        guild_id: guild_id,
+    });
+
+    if (!isUserInGuild) {
+        return corsResponse(origin, "User is not in guild", 403);
+    }
+
+    return corsResponse(origin, "User is in guild", 200);
+}
+
+// post - has auth
+async function handle_create_guild(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    // preflight
+    if (req.method === "OPTIONS") {
+        return handle_preflight(origin);
+    }
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "User is not authenticated", 403);
+    }
+
+    // @ts-ignore
+    const owner = req.cookies.get("user_id") as string;
+    const { guild_name } = await req.json();
+
+    const guild: Guild = {
+        id: randomUUIDv7(),
+        name: guild_name,
+        owner: owner,
+        created_at: new Date().toISOString().slice(0, 19).replace("T", " "),
+    };
+
+    const guildExists = db.get_guild(guild.id);
+
+    if (Boolean(guildExists)) {
+        return corsResponse(origin, "Guild already exists", 400);
+    }
+
+    db.create_guild(guild);
+    return corsResponse(origin, guild.id, 200);
+}
+
+// get - has auth
+// http://0.0.0.0:5000/join_guild?guild_id=x
+async function handle_join_guild(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "User is not authenticated", 403);
+    }
+
+    const url = new URL(req.url);
+    const guildId = url.searchParams.get("guild_id") as string;
+
+    //@ts-ignore
+    const userId = req.cookies.get("user_id") as string;
+
+    try {
+        db.join_guild({ user_id: userId, guild_id: guildId });
+        return corsResponse(origin, "Joined guild", 200);
+    } catch (error) {
+        return corsResponse(origin, "Failed to join guild", 403);
+    }
+}
+
+// get - has auth - nextjs
+// http://localhost:5000/get_guild?guild_id=x
+async function handle_get_guild(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const url = new URL(req.url);
+    const guildId = url.searchParams.get("guild_id") as string;
+
+    const guild = db.get_guild(guildId);
+
+    if (!guild) {
+        return corsResponse(origin, "Guild does not exist", 404);
+    }
+
+    return corsResponse(origin, guild, 200);
+}
+
+// get- for nextjs
+// http://localhost:5000/get_user_guilds?user_id=x
+async function handle_get_user_guilds(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const url = new URL(req.url);
+    const userId = url.searchParams.get("user_id") as string;
+
+    const guilds = db.get_all_guilds_of_user(userId);
+
+    return corsResponse(origin, guilds, 200);
+}
+
+//*===================================== SERVER =========================================
 const server = Bun.serve({
     port: 5000,
     idleTimeout: 0,
+    hostname: "0.0.0.0",
     routes: {
-        "/send/": handle_new_message,
-        "/events/:guildId": handle_sse,
-        "/receive/": handle_get_messages,
+        "/grab_old_msgs": handle_get_messages, // get
+        "/ws": handle_ws, // get
+        "/register": handle_register, // post
+        "/login": handle_login, // post
+        "/logout": handle_logout, // get
+        "/validate_auth": handle_validate_auth, // local connection // get
+        "/validate_user_in_guild": handle_check_user_is_in_guild, // local connection // get
+        "/create_guild": handle_create_guild, // post
+        "/join_guild": handle_join_guild, // get
+        "/get_guild": handle_get_guild, // local connection // get
+        "/get_user_guilds": handle_get_user_guilds, // local connection // get
+    },
+    websocket: {
+        async message(ws: any, message: any) {
+            const msgObj = JSON.parse(message);
+
+            const newMessage = handle_msg_upload(msgObj);
+
+            if (ws.data.guild_id === msgObj.guild) {
+                ws.send(JSON.stringify(newMessage));
+            }
+        },
+        async open(ws: any) {
+            ws.send("Connected");
+        },
+        async close(ws: any) {
+        },
+        idleTimeout: 0,
     },
 });
+
+console.log(`Listening on http://${server.hostname}:${server.port}`);
