@@ -20,7 +20,7 @@ type User = {
     username: string;
     email: string;
     password: string;
-    avatar: string;
+    avatar: string | Uint8Array;
     created_at: string;
 };
 
@@ -28,6 +28,7 @@ type Guild = {
     id: string;
     name: string;
     owner: string;
+    avatar: string | Uint8Array;
     created_at: string;
 };
 
@@ -117,7 +118,7 @@ function corsResponse(
 const db = new Database("./db/chatapp.sqlite");
 //*================================= REQUEST HANDLER ====================================
 
-function handle_msg_upload(msg: Message) {
+function handle_msg_upload(msg: any) {
     const id: string = randomUUIDv7();
     const timestamp: string = new Date()
         .toISOString()
@@ -134,11 +135,10 @@ function handle_msg_upload(msg: Message) {
 
     db.upload_message(message);
 
-    return message;
+    return { ...message, "avatar": msg.avatar };
 }
 
 // get - has auth
-// http://0.0.0.0:5000/grab_old_msgs?guild_id=x&page=x&page_size=x
 async function handle_get_messages(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
@@ -167,10 +167,11 @@ async function handle_ws(req: BunRequest) {
     const guildId = url.searchParams.get("guild_id") as string;
     const token = url.searchParams.get("token") as string;
     const userId = url.searchParams.get("user_id") as string;
+    const email = url.searchParams.get("email") as string;
 
     const payload = await verify_jwt(token);
 
-    if (payload.id == userId) {
+    if (payload.id == userId && payload.email == email) {
     } else {
         return corsResponse("*", "User is not authorized", 401);
     }
@@ -250,13 +251,25 @@ async function handle_register(req: BunRequest) {
     // hashes the password
     const hashedPassword = await pass.hash(password);
 
+    // get avatar from dicebear
+    const avatarRes = await fetch(
+        `https://api.dicebear.com/9.x/adventurer/webp?seed=${username}&earrings=variant02,variant03,variant04,variant05,variant06,variant01&earringsProbability=30&eyebrows=variant01,variant02,variant03,variant04,variant05,variant06,variant08,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant07&eyes=variant01,variant02,variant03,variant04,variant05,variant07,variant08,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18,variant19,variant20,variant21,variant22,variant23,variant24,variant25,variant26,variant06&featuresProbability=20&glasses=variant02,variant03,variant04,variant05,variant01&glassesProbability=25&hair=long02,long03,long04,long05,long06,long07,long08,long09,long10,long11,long12,long13,long14,long15,long16,long17,long18,long19,long20,long21,long22,long23,long24,long25,long26,short01,short02,short03,short04,short05,short06,short07,short08,short09,short10,short11,short12,short13,short14,short15,short16,short17,short18,short19,long01&hairColor=3eac2c,562306,592454,6a4e35,796a45,85c2c6,ab2a18,ac6511,afafaf,b9a05f,cb6820,dba3be,e5d7a3,0e0e0e&mouth=variant01,variant02,variant03,variant04,variant05,variant06,variant08,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18,variant19,variant20,variant21,variant22,variant23,variant24,variant25,variant26,variant27,variant28,variant29,variant30,variant07&backgroundColor=ffdfbf,d1d4f9,b6e3f4`,
+    );
+
+    const avatarArray = await avatarRes.arrayBuffer();
+    const buffer = Buffer.from(new Uint8Array(avatarArray));
+    const base64String = buffer.toString(
+        "base64",
+    );
+    const avatarUrl = `data:"image/webp";base64,${base64String}`;
+
     // user object
     const user: User = {
         id: randomUUIDv7(),
         username: username,
         email: email,
         password: hashedPassword,
-        avatar: "",
+        avatar: avatarUrl,
         created_at: new Date().toISOString().slice(0, 19).replace("T", " "),
     };
 
@@ -282,7 +295,6 @@ async function handle_register(req: BunRequest) {
 }
 
 // get
-// http://0.0.0.0:5000/logout`
 async function handle_logout(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
     //@ts-ignore
@@ -293,8 +305,15 @@ async function handle_logout(req: BunRequest) {
     return corsResponse(origin, "User logged out", 200);
 }
 
+// get - nextjs
+async function handle_get_user(req: BunRequest) {
+    const email = new URL(req.url).searchParams.get("user_email") as string;
+    const user = db.get_user(email);
+
+    return corsResponse("*", user, 200);
+}
+
 // get - validates the token for nextjs
-// http://localhost:5000/validate_auth?token=x&user_id=x&user_email=x
 async function handle_validate_auth(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
@@ -302,6 +321,10 @@ async function handle_validate_auth(req: BunRequest) {
     const token = url.searchParams.get("token") as string;
     const userId = url.searchParams.get("user_id") as string;
     const email = url.searchParams.get("user_email") as string;
+
+    if (!db.get_user(email)) {
+        return corsResponse(origin, "User does not exist", 404);
+    }
 
     const payload = await verify_jwt(token);
 
@@ -313,7 +336,6 @@ async function handle_validate_auth(req: BunRequest) {
 }
 
 // get - for checking if user is in guild - for nextjs
-// http://localhost:5000/validate_user_in_guild?user_id=x&guild_id=x
 async function handle_check_user_is_in_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
@@ -351,10 +373,23 @@ async function handle_create_guild(req: BunRequest) {
     const owner = req.cookies.get("user_id") as string;
     const { guild_name } = await req.json();
 
+    // get avatar from dicebear
+    const avatarRes = await fetch(
+        `https://api.dicebear.com/9.x/adventurer-neutral/webp?seed=${guild_name}&backgroundColor=763900,9e5622,ecad80,ffdfbf&eyebrows=variant02,variant03,variant04,variant05,variant06,variant07,variant08,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant01&eyes=variant02,variant03,variant04,variant05,variant06,variant07,variant08,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18,variant19,variant20,variant21,variant22,variant23,variant24,variant25,variant26,variant01&glasses=variant02,variant03,variant04,variant01,variant05&glassesProbability=30&mouth=variant01,variant02,variant03,variant04,variant05,variant08,variant09,variant10,variant11,variant12,variant13,variant14,variant15,variant16,variant17,variant18,variant19,variant20,variant21,variant22,variant23,variant24,variant25,variant26,variant27,variant28,variant29,variant30,variant06,variant07`,
+    );
+
+    const avatarArray = await avatarRes.arrayBuffer();
+    const buffer = Buffer.from(new Uint8Array(avatarArray));
+    const base64String = buffer.toString(
+        "base64",
+    );
+    const avatarUrl = `data:"image/webp";base64,${base64String}`;
+
     const guild: Guild = {
         id: randomUUIDv7(),
         name: guild_name,
         owner: owner,
+        avatar: avatarUrl,
         created_at: new Date().toISOString().slice(0, 19).replace("T", " "),
     };
 
@@ -369,7 +404,6 @@ async function handle_create_guild(req: BunRequest) {
 }
 
 // get - has auth
-// http://0.0.0.0:5000/join_guild?guild_id=x
 async function handle_join_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
@@ -393,14 +427,13 @@ async function handle_join_guild(req: BunRequest) {
 }
 
 // get - has auth - nextjs
-// http://localhost:5000/get_guild?guild_id=x
 async function handle_get_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
     const url = new URL(req.url);
     const guildId = url.searchParams.get("guild_id") as string;
 
-    const guild = db.get_guild(guildId);
+    const guild = db.get_guild(guildId) as Guild;
 
     if (!guild) {
         return corsResponse(origin, "Guild does not exist", 404);
@@ -410,7 +443,6 @@ async function handle_get_guild(req: BunRequest) {
 }
 
 // get- for nextjs
-// http://localhost:5000/get_user_guilds?user_id=x
 async function handle_get_user_guilds(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
@@ -433,6 +465,7 @@ const server = Bun.serve({
         "/register": handle_register, // post
         "/login": handle_login, // post
         "/logout": handle_logout, // get
+        "/get_user": handle_get_user, // local connection // get
         "/validate_auth": handle_validate_auth, // local connection // get
         "/validate_user_in_guild": handle_check_user_is_in_guild, // local connection // get
         "/create_guild": handle_create_guild, // post

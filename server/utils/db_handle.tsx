@@ -15,7 +15,7 @@ type User = {
     username: string;
     email: string;
     password: string;
-    avatar: string;
+    avatar: string | Uint8Array;
     created_at: string;
 };
 
@@ -23,6 +23,7 @@ type Guild = {
     id: string;
     name: string;
     owner: string;
+    avatar: string | Uint8Array;
     created_at: string;
 };
 
@@ -66,6 +67,7 @@ export default class DB {
                     created_at DATETIME,
                     name TEXT NOT NULL,
                     owner TEXT NOT NULL,
+                    avatar TEXT NOT NULL,
                     FOREIGN KEY (owner) REFERENCES users(id)
                 );
                 CREATE TABLE IF NOT EXISTS guild_users (
@@ -166,7 +168,7 @@ export default class DB {
 
     create_guild(guild: Guild) {
         const createStatment = this.db.prepare(
-            "INSERT INTO guilds (id, name, owner, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO guilds (id, name, owner, avatar, created_at) VALUES (?, ?, ?, ?, ?)",
         );
         const joinStatment = this.db.prepare(
             "INSERT INTO guild_users (user_id, guild_id) VALUES (?, ?)",
@@ -177,6 +179,7 @@ export default class DB {
                 guild.id,
                 guild.name,
                 guild.owner,
+                guild.avatar,
                 guild.created_at,
             );
             joinStatment.run(guild.owner, guild.id);
@@ -256,12 +259,18 @@ export default class DB {
         }
 
         const getMessagesStatement = this.db.query(`
-            SELECT id, author_id, author_name, guild, content, created_at
-            FROM messages
-            WHERE guild = ?
-            ORDER BY created_at DESC
-            LIMIT ?
-            OFFSET ?
+                SELECT
+                    m.id, m.author_id, m.author_name, m.guild, m.content, m.created_at, u.avatar
+                FROM
+                    messages m
+                JOIN
+                    users u ON u.id = m.author_id
+                WHERE
+                    m.guild = ?
+                ORDER BY
+                    m.created_at DESC
+                LIMIT ?
+                OFFSET ?;
         `);
 
         const offset = (page - 1) * pageSize;
