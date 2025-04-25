@@ -113,6 +113,8 @@ function corsResponse(
         },
     });
 }
+
+const connectedWsClients = new Set<WebSocket>();
 //*==================================== DATABASE ========================================
 // initialize database
 const db = new Database("./db/chatapp.sqlite");
@@ -163,18 +165,16 @@ async function handle_get_messages(req: BunRequest) {
 
 // get - has auth(only using email and user id)
 async function handle_ws(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "Unauthorized", 401);
+    }
+
     const url = new URL(req.url);
     const guildId = url.searchParams.get("guild_id") as string;
-    const token = url.searchParams.get("token") as string;
     const userId = url.searchParams.get("user_id") as string;
-    const email = url.searchParams.get("email") as string;
-
-    const payload = await verify_jwt(token);
-
-    if (payload.id == userId && payload.email == email) {
-    } else {
-        return corsResponse("*", "User is not authorized", 401);
-    }
 
     if (!db.check_user_is_in_guild({ user_id: userId, guild_id: guildId })) {
         return corsResponse("*", "User is not in guild", 403);
@@ -202,6 +202,7 @@ async function handle_login(req: BunRequest) {
 
     // @ts-ignore
     const cookies = req.cookies;
+
     const { email, password } = await req.json();
 
     // gets user information
@@ -226,11 +227,25 @@ async function handle_login(req: BunRequest) {
         httpOnly: true,
         path: "/",
         expires: new Date(Date.now() + 86400000),
-        sameSite: "lax",
+        sameSite: "none",
+        secure: true,
+        domain: "campfire.doctorthe113.com",
     });
-    cookies.set("user_id", user.id);
-    cookies.set("user_email", user.email);
-    cookies.set("username", user.username);
+    cookies.set("user_id", user.id, {
+        sameSite: "none",
+        secure: true,
+        domain: "campfire.doctorthe113.com",
+    });
+    cookies.set("user_email", user.email, {
+        sameSite: "none",
+        secure: true,
+        domain: "campfire.doctorthe113.com",
+    });
+    cookies.set("username", user.username, {
+        sameSite: "none",
+        secure: true,
+        domain: "campfire.doctorthe113.com",
+    });
 
     return corsResponse(origin, null, 200);
 }
@@ -281,28 +296,31 @@ async function handle_register(req: BunRequest) {
             httpOnly: true,
             path: "/",
             expires: new Date(Date.now() + 86400000),
-            sameSite: "lax",
+            sameSite: "none",
+            secure: true,
+            domain: "campfire.doctorthe113.com",
         });
-        cookies.set("user_id", user.id);
-        cookies.set("user_email", user.email);
-        cookies.set("username", user.username);
+        cookies.set("user_id", user.id, {
+            sameSite: "none",
+            secure: true,
+            domain: "campfire.doctorthe113.com",
+        });
+        cookies.set("user_email", user.email, {
+            sameSite: "none",
+            secure: true,
+            domain: "campfire.doctorthe113.com",
+        });
+        cookies.set("username", user.username, {
+            sameSite: "none",
+            secure: true,
+            domain: "campfire.doctorthe113.com",
+        });
 
         return corsResponse(origin, "User created", 200);
     } catch (error) {
         console.log(error);
         return corsResponse(origin, "User already exists", 400);
     }
-}
-
-// get
-async function handle_logout(req: BunRequest) {
-    const origin = req.headers.get("Origin") as string;
-    //@ts-ignore
-    const cookies = req.cookies;
-    cookies.delete("session");
-    cookies.delete("user_id");
-    cookies.delete("user_email");
-    return corsResponse(origin, "User logged out", 200);
 }
 
 // get - nextjs
@@ -464,7 +482,6 @@ const server = Bun.serve({
         "/ws": handle_ws, // get
         "/register": handle_register, // post
         "/login": handle_login, // post
-        "/logout": handle_logout, // get
         "/get_user": handle_get_user, // local connection // get
         "/validate_auth": handle_validate_auth, // local connection // get
         "/validate_user_in_guild": handle_check_user_is_in_guild, // local connection // get
@@ -479,14 +496,19 @@ const server = Bun.serve({
 
             const newMessage = handle_msg_upload(msgObj);
 
-            if (ws.data.guild_id === msgObj.guild) {
-                ws.send(JSON.stringify(newMessage));
-            }
+            connectedWsClients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify(newMessage));
+                }
+            });
         },
+
         async open(ws: any) {
             ws.send("Connected");
+            connectedWsClients.add(ws);
         },
         async close(ws: any) {
+            connectedWsClients.delete(ws);
         },
         idleTimeout: 0,
     },
