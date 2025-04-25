@@ -15,9 +15,6 @@ type Message = {
     created_at: string;
 };
 
-// todo: session token is passed as prop from /chatroom/[guildId]
-// todo: this is almost impossible for me to transfer the cookies to backend otherwise
-// todo: probably not safe, but it works
 export default function ChatInterface(
     { guildId, username, userId, guildName, avatarUrl }: {
         guildId: string;
@@ -29,7 +26,18 @@ export default function ChatInterface(
 ) {
     const [messages, setMessages] = useState([] as Array<Message>);
     const [ws, setWs] = useState(null as WebSocket | null);
+    const [msgContent, setMsgContent] = useState("");
 
+    // sets api url based on env
+    let apiDomain: string;
+    const env = process.env.NODE_ENV;
+    if (env === "production") {
+        apiDomain = "api.campfire.doctorthe113.com";
+    } else {
+        apiDomain = "localhost:5000";
+    }
+
+    // listens to the websocket
     if (ws !== null) {
         ws.onmessage = (e) => {
             try {
@@ -44,7 +52,7 @@ export default function ChatInterface(
     // get previous messeges from the guild
     const grab_old_msgs = async (guildId: string) => {
         const messages = await fetch(
-            `https://api.campfire.doctorthe113.com/grab_old_msgs?guild_id=${guildId}`,
+            `https://${apiDomain}/grab_old_msgs?guild_id=${guildId}`,
             { credentials: "include", method: "GET" },
         );
 
@@ -56,7 +64,7 @@ export default function ChatInterface(
         e.preventDefault();
         const textArea = document.getElementById(
             "chat-text-area",
-        ) as HTMLInputElement;
+        ) as HTMLTextAreaElement;
 
         try {
             ws?.send(
@@ -64,7 +72,7 @@ export default function ChatInterface(
                     guild: guildId,
                     author_id: userId,
                     author_name: username,
-                    content: textArea.value,
+                    content: msgContent,
                     avatar: avatarUrl,
                 }),
             );
@@ -95,23 +103,43 @@ export default function ChatInterface(
 
     // on mount
     useEffect(() => {
+        // grabs all the old messages
         async function _() {
             const oldMessages: Array<Message> = await grab_old_msgs(guildId);
             setMessages(oldMessages);
         }
         _();
 
+        // changes focus to textarea
         const textArea = document.getElementById(
             "chat-text-area",
         ) as HTMLInputElement;
         textArea.focus();
 
+        // sets up websocket
         const ws = new WebSocket(
-            `wss://api.campfire.doctorthe113.com/ws?guild_id=${guildId}&user_id=${userId}`,
+            `wss://${apiDomain}/ws?guild_id=${guildId}&user_id=${userId}`,
         );
         ws.onopen = () => {
-            console.log("Connected to websocket");
+            // ? not sure if i should sent a toast
+            // toast("Connected to websocket.", {
+            //     action: {
+            //         label: "Okay",
+            //         onClick: () => {},
+            //     },
+            // });
+            console.log("Connected to websocket.");
         };
+
+        if (!ws) {
+            toast("Failed to connect to websocket.", {
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
+        }
+
         setWs(ws);
     }, []);
 
@@ -162,6 +190,9 @@ export default function ChatInterface(
                     minHeight={48}
                     id="chat-text-area"
                     className="resize-none max-h-25 mr-2 h-12"
+                    onChange={(e) => {
+                        setMsgContent(e.target.value);
+                    }}
                     onKeyDown={(e) => {
                         if ((e.shiftKey || e.ctrlKey) && e.key === "Enter") {
                         } else if (e.key === "Enter") {
@@ -173,6 +204,7 @@ export default function ChatInterface(
                 <Button
                     onClick={send_message}
                     className="h-12 text-secondary font-bold"
+                    disabled={!msgContent.trim()}
                 >
                     <CornerDownLeft />
                     Send

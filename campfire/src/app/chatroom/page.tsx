@@ -11,7 +11,11 @@ import DarkModeToggle from "@/components/ui/darkModeToggle";
 
 const get_user = async (userEmail: string) => {
     return await (await fetch(
-        "http://localhost:5000/get_user?user_email=" + userEmail,
+        `${
+            process.env.NODE_ENV === "development"
+                ? "https"
+                : "http"
+        }://localhost:5000/get_user?user_email=${userEmail}`,
     )).json();
 };
 
@@ -24,7 +28,7 @@ export default async function Chatroom() {
 
     return (
         <SidebarProvider className="w-screen h-screen">
-            <GuildSidebar currentGuildName="" userInfo={userInfo} />
+            <GuildSidebar currentGuildName="" guildId="" userInfo={userInfo} />
             <SidebarInset>
                 <main className="rounded-lg m-2 flex-1 flex flex-col">
                     <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-8 flex h-8 shrink-0 items-center gap-2 border-b border-b-secondary transition-[width,height] ease-linear">

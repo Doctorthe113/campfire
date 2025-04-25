@@ -4,6 +4,15 @@ import { password as pass } from "bun";
 import { jwtVerify, SignJWT } from "jose";
 import Database from "./utils/db_handle";
 
+const serverEnv = Bun.env.NODE_ENV;
+let clientDomain = "";
+if (serverEnv === "development") {
+    console.log("Development environment detected");
+    clientDomain = "localhost";
+} else {
+    clientDomain = "campfire.doctorthe113.com";
+}
+
 //*===================================== TYPES ========================================
 // message type
 type Message = {
@@ -229,22 +238,22 @@ async function handle_login(req: BunRequest) {
         expires: new Date(Date.now() + 86400000),
         sameSite: "none",
         secure: true,
-        domain: "campfire.doctorthe113.com",
+        domain: clientDomain,
     });
     cookies.set("user_id", user.id, {
         sameSite: "none",
         secure: true,
-        domain: "campfire.doctorthe113.com",
+        domain: clientDomain,
     });
     cookies.set("user_email", user.email, {
         sameSite: "none",
         secure: true,
-        domain: "campfire.doctorthe113.com",
+        domain: clientDomain,
     });
     cookies.set("username", user.username, {
         sameSite: "none",
         secure: true,
-        domain: "campfire.doctorthe113.com",
+        domain: clientDomain,
     });
 
     return corsResponse(origin, null, 200);
@@ -298,22 +307,22 @@ async function handle_register(req: BunRequest) {
             expires: new Date(Date.now() + 86400000),
             sameSite: "none",
             secure: true,
-            domain: "campfire.doctorthe113.com",
+            domain: clientDomain,
         });
         cookies.set("user_id", user.id, {
             sameSite: "none",
             secure: true,
-            domain: "campfire.doctorthe113.com",
+            domain: clientDomain,
         });
         cookies.set("user_email", user.email, {
             sameSite: "none",
             secure: true,
-            domain: "campfire.doctorthe113.com",
+            domain: clientDomain,
         });
         cookies.set("username", user.username, {
             sameSite: "none",
             secure: true,
-            domain: "campfire.doctorthe113.com",
+            domain: clientDomain,
         });
 
         return corsResponse(origin, "User created", 200);
@@ -476,13 +485,20 @@ async function handle_get_user_guilds(req: BunRequest) {
 const server = Bun.serve({
     port: 5000,
     idleTimeout: 0,
-    hostname: "0.0.0.0",
+    ...(serverEnv === "development"
+        ? {
+            tls: {
+                keyFile: "./localhost.key",
+                certFile: "./localhost.crt",
+            },
+        }
+        : {}),
     routes: {
         "/grab_old_msgs": handle_get_messages, // get
         "/ws": handle_ws, // get
         "/register": handle_register, // post
         "/login": handle_login, // post
-        "/get_user": handle_get_user, // local connection // get
+        "/get_user": handle_get_user, // get
         "/validate_auth": handle_validate_auth, // local connection // get
         "/validate_user_in_guild": handle_check_user_is_in_guild, // local connection // get
         "/create_guild": handle_create_guild, // post

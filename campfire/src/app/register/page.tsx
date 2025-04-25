@@ -20,6 +20,15 @@ export default function Login() {
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
 
+    // sets api url based on env
+    let apiDomain: string;
+    const env = process.env.NODE_ENV;
+    if (env === "production") {
+        apiDomain = "api.campfire.doctorthe113.com";
+    } else {
+        apiDomain = "localhost:5000";
+    }
+
     const handle_register = async () => {
         if (email === "" || password === "" || username === "") {
             toast("Please fill in all fields.", {
@@ -32,7 +41,7 @@ export default function Login() {
             return;
         }
         const res = await fetch(
-            "https://api.campfire.doctorthe113.com/register",
+            `https://${apiDomain}/register`,
             {
                 method: "POST",
                 headers: {

@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 *{
-    @apply scrollbar-thumb-primary scrollbar scrollbar-track-background/0;
+    @apply scrollbar-thumb-primary scrollbar scrollbar-track-background/0 transition-all duration-300;
 }
 
 :root {

@@ -33,7 +33,7 @@ export default function RootLayout({
                     <meta name="darkreader-lock" />
                 </head>
                 <body
-                    className={`${oxanium.variable} ${merriweather.variable} bg-background h-screen w-screen font-sans transition-all duration-300`}
+                    className={`${oxanium.variable} ${merriweather.variable} bg-background h-screen w-screen font-sans`}
                 >
                     <ThemeProvider
                         attribute="class"

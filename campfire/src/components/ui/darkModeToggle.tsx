@@ -12,9 +12,7 @@ export default function DarkModeToggle() {
         <div className="grow flex justify-end h-full pb-0.5">
             <Button
                 variant="default"
-                className={theme === "dark"
-                    ? "bg-primary h-full aspect-square text-secondary border-2 border-foreground"
-                    : "bg-primary h-full aspect-square text-secondary border-2 border-foreground"}
+                className={"bg-primary h-full aspect-square text-secondary border-1 border-foreground"}
                 size="icon"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >

@@ -21,6 +21,7 @@ import {
 import { GuildDialog } from "@/components/guild-dialog";
 import Link from "next/link";
 import Image from "next/image";
+import InviteCopy from "./invite-copy";
 
 type User = {
     id: string;
@@ -34,13 +35,18 @@ type User = {
 // get a list of guilds that the user is in
 const get_user_guilds = async (userId: string) => {
     return await (await fetch(
-        "http://localhost:5000/get_user_guilds?user_id=" + userId,
+        `${
+            process.env.NODE_ENV === "development"
+                ? "https"
+                : "http"
+        }://localhost:5000/get_user_guilds?user_id=${userId}`,
     )).json();
 };
 
 export async function GuildSidebar(
-    { currentGuildName, userInfo }: {
+    { currentGuildName, guildId, userInfo }: {
         currentGuildName: string;
+        guildId: string;
         userInfo: User;
     },
 ) {
@@ -48,9 +54,12 @@ export async function GuildSidebar(
 
     return (
         <Sidebar variant="inset" collapsible="offcanvas">
-            <SidebarHeader className="p-0 bg-background rounded-lg border-2 border-text">
+            <SidebarHeader className="p-0 bg-background rounded-lg border-2 border-foreground">
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="flex h-16 m-0 p-0" asChild>
+                    <DropdownMenuTrigger
+                        className="flex h-16 m-0 p-0 focus-visible:disabled"
+                        asChild
+                    >
                         <SidebarMenuButton>
                             <div className="flex h-full m-0 items-center w-full px-2">
                                 <Image
@@ -74,29 +83,56 @@ export async function GuildSidebar(
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className="w-[--radix-popper-anchor-width] bg-accent text-primary border-1 border-foreground"
+                        className="w-[--radix-popper-anchor-width] bg-accent text-foreground border-1 border-foreground"
                         align="end"
                     >
-                        <DropdownMenuLabel className="text-sm font-bold">
+                        <DropdownMenuLabel className="text-xs leading-tight">
                             My Account
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <DropdownMenuItem className="focus:bg-background">
                                 <Link href="" className="w-full">
-                                    Update profile
+                                    Update profile ⚠️🚧
                                 </Link>
                             </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
+                            <DropdownMenuItem className="focus:bg-background">
+                                <Link href="" className="w-full">
+                                    Change status ⚠️🚧
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="focus:bg-background">
+                                <Link href="" className="w-full">
+                                    Delete account ⚠️🚧
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="focus:bg-background">
                                 <Link
-                                    href="http://localhost:5000/logout"
+                                    href="/api/logout"
                                     className="w-full"
                                 >
                                     Logout
                                 </Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs font-bold leading-tight">
+                            Guild Settings ⚠️🚧
+                        </DropdownMenuLabel>
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem
+                                className="focus:bg-background"
+                                disabled={!guildId}
+                            >
+                                <Link href="" className="w-full">
+                                    Update guild profile ⚠️🚧
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="focus:bg-background"
+                                disabled={!guildId}
+                            >
+                                <InviteCopy guildId={currentGuildName} />
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>
@@ -107,29 +143,34 @@ export async function GuildSidebar(
                     <SidebarGroupLabel>Guilds</SidebarGroupLabel>
                     <SidebarMenu>
                         {guildList.map((guild: any) => (
-                            <SidebarMenuItem key={guild.id}>
+                            <SidebarMenuItem
+                                key={guild.id}
+                                className="border-1 border-border rounded-sm p-0"
+                            >
                                 <SidebarMenuButton
                                     asChild
-                                    className="m-0 p-0 hover:rounded-sm px-2 py-1 h-fit"
+                                    className="m-0 p-0 px-2 hover:rounded-sm h-fit"
                                 >
-                                    <div className="flex justify-start items-center h-6">
+                                    <div className="flex justify-start items-center h-max p-0">
                                         <Image
                                             src={guild.avatar}
                                             alt=""
                                             width={16}
                                             height={16}
-                                            className="inline rounded-[4px] h-full w-6"
+                                            className="inline rounded-[4px] h-6 w-6 my-1"
                                         >
                                         </Image>
                                         <Link
-                                            className="grow h-full text-sm"
+                                            className="grow h-6 text-sm flex items-center"
                                             href={`/chatroom/${guild.id}`}
                                         >
                                             <span
-                                                className={guild.name ==
-                                                        currentGuildName
-                                                    ? "text-primary"
-                                                    : ""}
+                                                className={`${
+                                                    guild.name ==
+                                                            currentGuildName
+                                                        ? "text-primary"
+                                                        : ""
+                                                }`}
                                             >
                                                 {guild.name}
                                             </span>

@@ -16,6 +16,15 @@ import { redirect } from "next/navigation";
 import { toast } from "sonner";
 
 export function GuildDialog() {
+    // sets api url based on env
+    let apiDomain: string;
+    const env = process.env.NODE_ENV;
+    if (env === "production") {
+        apiDomain = "api.campfire.doctorthe113.com";
+    } else {
+        apiDomain = "localhost:5000";
+    }
+
     const handle_join_guild = async (e: any) => {
         e.preventDefault();
         const guildId =
@@ -23,7 +32,7 @@ export function GuildDialog() {
                 .value;
 
         const res = await fetch(
-            `https://api.campfire.doctorthe113.com/join_guild?guild_id=${guildId}`,
+            `https://${apiDomain}/join_guild?guild_id=${guildId}`,
             { credentials: "include", method: "GET" },
         );
 
@@ -49,7 +58,7 @@ export function GuildDialog() {
                 .value;
 
         const res = await fetch(
-            "https://api.campfire.doctorthe113.com/create_guild",
+            `https://${apiDomain}/create_guild`,
             {
                 method: "POST",
                 headers: {

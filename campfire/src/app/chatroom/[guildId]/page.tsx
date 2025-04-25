@@ -20,7 +20,11 @@ type Guild = {
 
 const validate_user_access = async (guildId: string, userId: string) => {
     const isValid = await fetch(
-        `http://localhost:5000/validate_user_in_guild?user_id=${userId}&guild_id=${guildId}`,
+        `${
+            process.env.NODE_ENV === "development"
+                ? "https"
+                : "http"
+        }://localhost:5000/validate_user_in_guild?user_id=${userId}&guild_id=${guildId}`,
     );
 
     if (isValid.status !== 200) {
@@ -31,7 +35,11 @@ const validate_user_access = async (guildId: string, userId: string) => {
 const get_guild = async (guildId: string) => {
     try {
         return await (await fetch(
-            "http://localhost:5000/get_guild?guild_id=" + guildId,
+            `${
+                process.env.NODE_ENV === "development"
+                    ? "https"
+                    : "http"
+            }://localhost:5000/get_guild?guild_id=${guildId}`,
         )).json();
     } catch {
         return redirect("/chatroom");
@@ -40,7 +48,11 @@ const get_guild = async (guildId: string) => {
 
 const get_user = async (userEmail: string) => {
     return await (await fetch(
-        "http://localhost:5000/get_user?user_email=" + userEmail,
+        `${
+            process.env.NODE_ENV === "development"
+                ? "https"
+                : "http"
+        }://localhost:5000/get_user?user_email=${userEmail}`,
     )).json();
 };
 
@@ -49,7 +61,6 @@ export default async function Chatroom(
 ) {
     const guildId: string = (await params).guildId;
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("session")?.value as string;
     const userId = cookieStore.get("user_id")?.value as string;
     const email = cookieStore.get("user_email")?.value as string;
     const guildInfo = await get_guild(guildId) as Guild;
@@ -62,6 +73,7 @@ export default async function Chatroom(
         <SidebarProvider className="w-screen h-screen">
             <GuildSidebar
                 currentGuildName={guildInfo.name}
+                guildId={guildId}
                 userInfo={userInfo}
             />
             <SidebarInset>

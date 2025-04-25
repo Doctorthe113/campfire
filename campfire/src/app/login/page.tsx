@@ -19,6 +19,15 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
+    // sets api url based on env
+    let apiDomain: string;
+    const env = process.env.NODE_ENV;
+    if (env === "production") {
+        apiDomain = "api.campfire.doctorthe113.com";
+    } else {
+        apiDomain = "localhost:5000";
+    }
+
     // for logging in
     const handle_login = async () => {
         if (email === "" || password === "") {
@@ -32,7 +41,7 @@ export default function Login() {
             return;
         }
 
-        const res = await fetch("https://api.campfire.doctorthe113.com/login", {
+        const res = await fetch(`https://${apiDomain}/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -97,6 +106,7 @@ export default function Login() {
                         <Input
                             type="email"
                             onChange={(e) => setEmail(e.target.value)}
+                            onFocus={(e) => setEmail(e.target.value)}
                         />
                     </div>
                     <div className="grid gap-1">

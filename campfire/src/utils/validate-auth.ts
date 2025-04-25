@@ -6,7 +6,11 @@ export async function validate_auth(cookieStore: any) {
     const userEmail = cookieStore.get("user_email")?.value;
 
     const res = await fetch(
-        `http://localhost:5000/validate_auth?token=${sessionToken}&user_id=${userId}&user_email=${userEmail}`,
+        `${
+            process.env.NODE_ENV === "development"
+                ? "https"
+                : "http"
+        }://localhost:5000/validate_auth?token=${sessionToken}&user_id=${userId}&user_email=${userEmail}`,
     );
 
     if (res.status === 200) {
