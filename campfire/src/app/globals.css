@@ -5,7 +5,16 @@
 @custom-variant dark (&:is(.dark *));
 
 *{
-    @apply scrollbar-thumb-primary scrollbar scrollbar-track-background/0 transition-all duration-300;
+    @apply scrollbar-thumb-primary scrollbar scrollbar-track-background/0 transition-all duration-300 delay-0;
+}
+/* ? might use it later */
+.landing-card-bg{
+    background-image:
+    linear-gradient(to top, rgba(0, 0, 0, 1) 5%, rgba(0, 0, 0, 0)),
+    url('/campfire_card_bg.webp');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: bottom;
 }
 
 :root {

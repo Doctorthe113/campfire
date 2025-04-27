@@ -85,6 +85,8 @@ export default function ChatInterface(
             });
         }
         textArea.value = "";
+        textArea.focus();
+        setMsgContent("");
     };
 
     // format time to local
@@ -149,19 +151,27 @@ export default function ChatInterface(
                 {messages.map((message: Message) => {
                     return (
                         <div
-                            className="flex w-full my-1"
+                            className={`flex w-full lg:max-w-2/3 my-1 gap-2 ${
+                                message.author_id === userId
+                                    ? "ml-auto flex-row-reverse"
+                                    : ""
+                            }`}
                             id={message.id}
                             key={`message-div${message.id}`}
                         >
                             <img
                                 src={message.avatar}
                                 alt=""
-                                className="w-10 h-10 mr-2 rounded-sm"
+                                className="w-10 h-10 rounded-sm"
                                 key={`message-avatar${message.id}`}
                             >
                             </img>
                             <div
-                                className="flex flex-col grow bg-muted px-2 rounded-sm py-0.5"
+                                className={`flex flex-col w-max max-w-9/12 ${
+                                    message.author_id === userId
+                                        ? "bg-accent"
+                                        : "bg-muted"
+                                } px-2 rounded-sm py-0.5`}
                                 key={`message-body-div${message.id}`}
                             >
                                 <div className="text-sm flex">
@@ -175,7 +185,7 @@ export default function ChatInterface(
                                         {format_time(message.created_at)}
                                     </span>
                                 </div>
-                                <pre className="text-sm font-serif leading-tight">
+                                <pre className="text-sm font-serif leading-tight wrap-anywhere text-wrap">
                                     {message.content}
                                 </pre>
                             </div>
@@ -183,7 +193,7 @@ export default function ChatInterface(
                     );
                 })}
             </div>
-            <div className="w-full max-h-28 h-fit flex">
+            <div className="w-full max-h-28 h-fit flex mt-2">
                 <AutosizeTextarea
                     placeholder={`Send a message to ${guildName.toUpperCase()}`}
                     maxHeight={102}
@@ -195,7 +205,7 @@ export default function ChatInterface(
                     }}
                     onKeyDown={(e) => {
                         if ((e.shiftKey || e.ctrlKey) && e.key === "Enter") {
-                        } else if (e.key === "Enter") {
+                        } else if (e.key === "Enter" && e.keyCode === 13) {
                             send_message(e);
                         }
                     }}

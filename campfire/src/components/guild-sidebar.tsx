@@ -54,10 +54,10 @@ export async function GuildSidebar(
 
     return (
         <Sidebar variant="inset" collapsible="offcanvas">
-            <SidebarHeader className="p-0 bg-background rounded-lg border-2 border-foreground">
+            <SidebarHeader className="p-0 bg-background md:rounded-lg md:border-2 border-foreground">
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        className="flex h-16 m-0 p-0 focus-visible:disabled"
+                        className="flex h-16 m-0 p-0 focus-visible:disabled md:rounded-lg rounded-none"
                         asChild
                     >
                         <SidebarMenuButton>
@@ -65,8 +65,8 @@ export async function GuildSidebar(
                                 <Image
                                     src={userInfo.avatar as string}
                                     id="avatar-img"
-                                    width={48}
-                                    height={48}
+                                    width={128}
+                                    height={128}
                                     alt=""
                                     className="inline rounded-sm h-12 w-12"
                                 >
@@ -145,25 +145,25 @@ export async function GuildSidebar(
                         {guildList.map((guild: any) => (
                             <SidebarMenuItem
                                 key={guild.id}
-                                className="border-1 border-border rounded-sm p-0"
+                                className="border-0 rounded-sm p-0"
                             >
                                 <SidebarMenuButton
                                     asChild
-                                    className="m-0 p-0 px-2 hover:rounded-sm h-fit"
+                                    className="m-0 p-0 px-2 active:scale-90 duration-10 border-border border-1 hover:rounded-sm hover:bg-background hover:border-foreground h-fit"
                                 >
                                     <div className="flex justify-start items-center h-max p-0">
-                                        <Image
-                                            src={guild.avatar}
-                                            alt=""
-                                            width={16}
-                                            height={16}
-                                            className="inline rounded-[4px] h-6 w-6 my-1"
-                                        >
-                                        </Image>
                                         <Link
-                                            className="grow h-6 text-sm flex items-center"
+                                            className="grow h-max text-sm flex items-center"
                                             href={`/chatroom/${guild.id}`}
                                         >
+                                            <Image
+                                                src={guild.avatar}
+                                                alt=""
+                                                width={16}
+                                                height={16}
+                                                className="inline rounded-[4px] h-6 w-6 my-2 mr-2"
+                                            >
+                                            </Image>
                                             <span
                                                 className={`${
                                                     guild.name ==
@@ -182,7 +182,7 @@ export async function GuildSidebar(
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter className="p-0 rounded-lg border-2 border-text bg-background">
+            <SidebarFooter className="p-0 md:rounded-lg md:border-2 border-text bg-background">
                 <div className="h-13 p-2 flex items-center justify-evenly">
                     <GuildDialog />
                 </div>

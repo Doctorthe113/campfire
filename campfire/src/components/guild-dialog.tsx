@@ -31,6 +31,17 @@ export function GuildDialog() {
             (document.getElementById("join-guild-id") as HTMLInputElement)
                 .value;
 
+        if (guildId === "") {
+            toast("Please fill in all fields.", {
+                description: "Guild ID is empty.",
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
+            return;
+        }
+
         const res = await fetch(
             `https://${apiDomain}/join_guild?guild_id=${guildId}`,
             { credentials: "include", method: "GET" },
@@ -56,6 +67,17 @@ export function GuildDialog() {
         const guildName =
             (document.getElementById("create-guild-id") as HTMLInputElement)
                 .value;
+
+        if (guildName === "") {
+            toast("Please fill in all fields.", {
+                description: "Guild name is empty.",
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
+            return;
+        }
 
         const res = await fetch(
             `https://${apiDomain}/create_guild`,

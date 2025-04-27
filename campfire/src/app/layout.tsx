@@ -17,8 +17,18 @@ const merriweather = Merriweather({
 });
 
 export const metadata: Metadata = {
-    title: "Campfire",
+    title: `Campfire ${process.env.NODE_ENV === "development" ? "- dev" : ""}`,
     description: "A simple discord like chatapp",
+    openGraph: {
+        title: `Campfire ${
+            process.env.NODE_ENV === "development" ? "- dev" : ""
+        }`,
+        description: "A simple discord like chatapp",
+        siteName: "Campfire",
+        images: [],
+        locale: "en-US",
+        type: "website",
+    },
 };
 
 export default function RootLayout({
@@ -31,9 +41,14 @@ export default function RootLayout({
             <html lang="en" suppressHydrationWarning>
                 <head>
                     <meta name="darkreader-lock" />
+                    <link
+                        rel="icon"
+                        href="/campfire.webp"
+                        type="image/x-icon"
+                    />
                 </head>
                 <body
-                    className={`${oxanium.variable} ${merriweather.variable} bg-background h-screen w-screen font-sans`}
+                    className={`${oxanium.variable} ${merriweather.variable} bg-background h-dvh w-screen font-sans`}
                 >
                     <ThemeProvider
                         attribute="class"
