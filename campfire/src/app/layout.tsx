@@ -43,7 +43,7 @@ export default function RootLayout({
                     <meta name="darkreader-lock" />
                     <link
                         rel="icon"
-                        href="/campfire.webp"
+                        href="/favicon.ico"
                         type="image/x-icon"
                     />
                 </head>

@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { AutosizeTextarea } from "@/components/ui/autoresizetextarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { CornerDownLeft } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 type Message = {
     id: string;
@@ -49,6 +49,16 @@ export default function ChatInterface(
         };
     }
 
+    // checks if the message is too long
+    if (msgContent.length > 2000) {
+        toast("Message too long.", {
+            action: {
+                label: "Okay",
+                onClick: () => {},
+            },
+        });
+    }
+
     // get previous messeges from the guild
     const grab_old_msgs = async (guildId: string) => {
         const messages = await fetch(
@@ -62,9 +72,21 @@ export default function ChatInterface(
     // send message via websocket
     const send_message = async (e: any) => {
         e.preventDefault();
+
         const textArea = document.getElementById(
             "chat-text-area",
         ) as HTMLTextAreaElement;
+
+        if (msgContent.length > 2000) {
+            toast("Message too long.", {
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
+        }
+
+        if (msgContent === "") return;
 
         try {
             ws?.send(
@@ -181,7 +203,7 @@ export default function ChatInterface(
                                     <span className="min-w-4 text-center">
                                         -
                                     </span>
-                                    <span className="text-muted-foreground">
+                                    <span className="text-muted-foreground min-w-40">
                                         {format_time(message.created_at)}
                                     </span>
                                 </div>
@@ -193,33 +215,34 @@ export default function ChatInterface(
                     );
                 })}
             </div>
-            <div className="w-full max-h-28 h-fit flex mt-2">
-                <AutosizeTextarea
+            <form
+                className="w-full max-h-28 h-fit flex mt-2 sticky bottom-0 bg-background"
+                onSubmit={send_message}
+            >
+                <Textarea
                     placeholder={`Send a message to ${guildName.toUpperCase()}`}
-                    maxHeight={102}
-                    minHeight={48}
                     id="chat-text-area"
                     className="resize-none max-h-25 mr-2 h-12"
                     onChange={(e) => {
                         setMsgContent(e.target.value);
                     }}
                     onKeyDown={(e) => {
-                        if ((e.shiftKey || e.ctrlKey) && e.key === "Enter") {
-                        } else if (e.key === "Enter" && e.keyCode === 13) {
-                            send_message(e);
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault(); // Prevent default Enter (new line)
+                            send_message(e); // Manually trigger send_message
                         }
                     }}
                 >
-                </AutosizeTextarea>
+                </Textarea>
                 <Button
-                    onClick={send_message}
-                    className="h-12 text-secondary font-bold"
+                    type="submit"
+                    className="min-h-12 max-h-[66px] h-full text-secondary font-bold"
                     disabled={!msgContent.trim()}
                 >
                     <CornerDownLeft />
                     Send
                 </Button>
-            </div>
+            </form>
         </div>
     );
 }

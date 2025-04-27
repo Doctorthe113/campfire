@@ -145,11 +145,11 @@ export async function GuildSidebar(
                         {guildList.map((guild: any) => (
                             <SidebarMenuItem
                                 key={guild.id}
-                                className="border-0 rounded-sm p-0"
+                                className="border-0 p-0 rounded-none"
                             >
                                 <SidebarMenuButton
                                     asChild
-                                    className="m-0 p-0 px-2 active:scale-90 duration-10 border-border border-1 hover:rounded-sm hover:bg-background hover:border-foreground h-fit"
+                                    className="m-0 p-0 px-2 active:scale-90 active:rounded-lg duration-10 border-border border-1 hover:rounded-lg md:rounded-lg rounded-none hover:bg-background hover:border-foreground h-fit"
                                 >
                                     <div className="flex justify-start items-center h-max p-0">
                                         <Link

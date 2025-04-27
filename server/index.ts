@@ -172,7 +172,7 @@ async function handle_get_messages(req: BunRequest) {
     return corsResponse(origin, messages, 200);
 }
 
-// get - has auth(only using email and user id)
+// get - has auth
 async function handle_ws(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
@@ -334,6 +334,13 @@ async function handle_register(req: BunRequest) {
 
 // get - nextjs
 async function handle_get_user(req: BunRequest) {
+    if (
+        !(req.url.startsWith("http://localhost") ||
+            req.url.startsWith("https://localhost"))
+    ) {
+        return corsResponse("*", "Unauthorized", 401);
+    }
+
     const email = new URL(req.url).searchParams.get("user_email") as string;
     const user = db.get_user(email);
 
@@ -343,6 +350,13 @@ async function handle_get_user(req: BunRequest) {
 // get - validates the token for nextjs
 async function handle_validate_auth(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
+
+    if (
+        !(req.url.startsWith("http://localhost") ||
+            req.url.startsWith("https://localhost"))
+    ) {
+        return corsResponse(origin, "Unauthorized", 401);
+    }
 
     const url = new URL(req.url);
     const token = url.searchParams.get("token") as string;
@@ -365,6 +379,13 @@ async function handle_validate_auth(req: BunRequest) {
 // get - for checking if user is in guild - for nextjs
 async function handle_check_user_is_in_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
+
+    if (
+        !(req.url.startsWith("http://localhost") ||
+            req.url.startsWith("https://localhost"))
+    ) {
+        return corsResponse(origin, "Unauthorized", 401);
+    }
 
     const url = new URL(req.url);
     const user_id = url.searchParams.get("user_id") as string;
@@ -453,9 +474,16 @@ async function handle_join_guild(req: BunRequest) {
     }
 }
 
-// get - has auth - nextjs
+// get - nextjs
 async function handle_get_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
+
+    if (
+        !(req.url.startsWith("http://localhost") ||
+            req.url.startsWith("https://localhost"))
+    ) {
+        return corsResponse(origin, "Unauthorized", 401);
+    }
 
     const url = new URL(req.url);
     const guildId = url.searchParams.get("guild_id") as string;
@@ -472,6 +500,13 @@ async function handle_get_guild(req: BunRequest) {
 // get- for nextjs
 async function handle_get_user_guilds(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
+
+    if (
+        !(req.url.startsWith("http://localhost") ||
+            req.url.startsWith("https://localhost"))
+    ) {
+        return corsResponse(origin, "Unauthorized", 401);
+    }
 
     const url = new URL(req.url);
     const userId = url.searchParams.get("user_id") as string;

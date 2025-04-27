@@ -7,6 +7,11 @@
 *{
     @apply scrollbar-thumb-primary scrollbar scrollbar-track-background/0 transition-all duration-300 delay-0;
 }
+
+textarea{
+    @apply transition-none duration-[0] delay-0;
+}
+
 /* ? might use it later */
 .landing-card-bg{
     background-image:
