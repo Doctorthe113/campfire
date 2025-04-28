@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { CornerDownLeft } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { CornerDownLeft, SquarePen, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { EditDialog } from "@/components/edit-dialog";
 
 type Message = {
     id: string;
@@ -40,12 +41,16 @@ export default function ChatInterface(
     // listens to the websocket
     if (ws !== null) {
         ws.onmessage = (e) => {
-            try {
-                const parsedMsg = JSON.parse(e.data);
+            if (e.data.startsWith("message:")) {
+                const parsedMsg = JSON.parse(
+                    e.data.replace("message:", ""),
+                );
                 if (parsedMsg.guild === guildId) {
                     setMessages((messages) => [...messages, parsedMsg]);
                 }
-            } catch {}
+            } else if (e.data.startsWith("event:")) {
+                handle_ws_events(e);
+            }
         };
     }
 
@@ -90,13 +95,14 @@ export default function ChatInterface(
 
         try {
             ws?.send(
-                JSON.stringify({
-                    guild: guildId,
-                    author_id: userId,
-                    author_name: username,
-                    content: msgContent,
-                    avatar: avatarUrl,
-                }),
+                "message:" +
+                    JSON.stringify({
+                        guild: guildId,
+                        author_id: userId,
+                        author_name: username,
+                        content: msgContent,
+                        avatar: avatarUrl,
+                    }),
             );
         } catch {
             toast("Failed to send message.", {
@@ -111,10 +117,79 @@ export default function ChatInterface(
         setMsgContent("");
     };
 
+    // delete message
+    const delete_message = async (e: any) => {
+        e.preventDefault();
+        const msgId = e.target.id.replace("delete-btn-", "");
+
+        ws?.send(
+            "event:" +
+                JSON.stringify({
+                    eventType: "delete",
+                    guild: guildId,
+                    id: msgId,
+                }),
+        );
+    };
+
+    // edit message
+    const edit_message = async (
+        e: any,
+        msgId: string,
+        newMsgContent: string,
+    ) => {
+        e.preventDefault();
+
+        if (
+            messages.filter((msg) => msg.id === msgId)[0].author_id !== userId
+        ) {
+            return;
+        }
+
+        if (newMsgContent === "") return;
+
+        ws?.send(
+            "event:" +
+                JSON.stringify({
+                    eventType: "edit",
+                    guild: guildId,
+                    id: msgId,
+                    content: newMsgContent,
+                }),
+        );
+    };
+
     // format time to local
     const format_time = (time: string) => {
         const date = new Date(time.replace(" ", "T") + "Z");
         return date.toLocaleString();
+    };
+
+    // handle websocket events
+    const handle_ws_events = (e: any) => {
+        const parsedMsg = JSON.parse(e.data.replace("event:", ""));
+
+        if (parsedMsg.guild !== guildId) {
+            return;
+        }
+
+        if (parsedMsg.eventType === "delete") {
+            console.log(parsedMsg);
+            setMessages((messages) =>
+                messages.filter((msg) => msg.id !== parsedMsg.id)
+            );
+        }
+
+        if (parsedMsg.eventType === "edit") {
+            setMessages((messages) =>
+                messages.map((msg) => {
+                    if (msg.id === parsedMsg.id) {
+                        msg.content = parsedMsg.content;
+                    }
+                    return msg;
+                })
+            );
+        }
     };
 
     // for auto scroll
@@ -144,6 +219,7 @@ export default function ChatInterface(
         const ws = new WebSocket(
             `wss://${apiDomain}/ws?guild_id=${guildId}&user_id=${userId}`,
         );
+
         ws.onopen = () => {
             // ? not sure if i should sent a toast
             // toast("Connected to websocket.", {
@@ -211,6 +287,22 @@ export default function ChatInterface(
                                     {message.content}
                                 </pre>
                             </div>
+                            <Button
+                                variant={"destructive"}
+                                id={`delete-btn-${message.id}`}
+                                onClick={delete_message}
+                                className={"w-6 h-6 rounded-sm"}
+                            >
+                                <Trash2 />
+                            </Button>
+                            {message.author_id === userId
+                                ? (
+                                    <EditDialog
+                                        msgId={message.id}
+                                        updateMessage={edit_message}
+                                    />
+                                )
+                                : null}
                         </div>
                     );
                 })}

@@ -89,6 +89,7 @@ export default class DB {
         }, 10000);
     }
 
+    //* message related db methods
     upload_message(msg: Message) {
         this.messagesBuffer.push(msg);
     }
@@ -117,6 +118,92 @@ export default class DB {
         })();
 
         this.messagesBuffer = [];
+    }
+
+    get_message(
+        id: UUID = "",
+        guildId: UUID = "",
+        author_id: UUID = "",
+        author_name: string = "",
+        content: string = "",
+    ) {
+        const checkStatment = this.db.prepare(`
+            SELECT * FROM messages
+            WHERE id = ? OR guild = ? OR author_id = ? OR author_name = ? OR content = ?
+        `);
+        return checkStatment.all(
+            id,
+            guildId,
+            author_id,
+            author_name,
+            content,
+        ) as Message[];
+    }
+
+    delete_message(id: UUID, author_id: string) {
+        const message: Message = this.get_message(id = id)[0];
+
+        if (message.author_id !== author_id) {
+            console.log(message.author_id, author_id);
+
+            return false;
+        }
+
+        const deleteStatment = this.db.prepare(
+            "DELETE FROM messages WHERE id = ?",
+        );
+        if (deleteStatment.run(id).changes === 1) {
+            return true;
+        }
+        return false;
+    }
+
+    edit_message(id: UUID, author_id: string, content: string) {
+        const message: Message = this.get_message(id = id)[0];
+
+        if (message.author_id !== author_id) {
+            console.log(message.author_id, author_id);
+
+            return false;
+        }
+
+        const editStatment = this.db.prepare(
+            "UPDATE messages SET content = ? WHERE id = ?",
+        );
+        if (editStatment.run(content, id).changes === 1) {
+            return true;
+        }
+        return false;
+    }
+
+    // gets a list of 50 latest messages in a guild
+    get_old_messages(guildId: UUID, page: number, pageSize: number = 50) {
+        if (is_valid_uuidv7(guildId) === false) {
+            return [];
+        }
+
+        if (typeof page !== "number" || typeof pageSize !== "number") {
+            return [];
+        }
+
+        const getMessagesStatement = this.db.query(`
+                    SELECT
+                        m.id, m.author_id, m.author_name, m.guild, m.content, m.created_at, u.avatar
+                    FROM
+                        messages m
+                    JOIN
+                        users u ON u.id = m.author_id
+                    WHERE
+                        m.guild = ?
+                    ORDER BY
+                        m.created_at DESC
+                    LIMIT ?
+                    OFFSET ?;
+            `);
+
+        const offset = (page - 1) * pageSize;
+        const messages = getMessagesStatement.all(guildId, pageSize, offset);
+        return messages.reverse();
     }
 
     //* user related db methods
@@ -246,36 +333,6 @@ export default class DB {
         `);
 
         return getGuildsStatement.all(userId);
-    }
-
-    // gets a list of 50 latest messages in a guild
-    get_old_messages(guildId: UUID, page: number, pageSize: number = 50) {
-        if (is_valid_uuidv7(guildId) === false) {
-            return [];
-        }
-
-        if (typeof page !== "number" || typeof pageSize !== "number") {
-            return [];
-        }
-
-        const getMessagesStatement = this.db.query(`
-                SELECT
-                    m.id, m.author_id, m.author_name, m.guild, m.content, m.created_at, u.avatar
-                FROM
-                    messages m
-                JOIN
-                    users u ON u.id = m.author_id
-                WHERE
-                    m.guild = ?
-                ORDER BY
-                    m.created_at DESC
-                LIMIT ?
-                OFFSET ?;
-        `);
-
-        const offset = (page - 1) * pageSize;
-        const messages = getMessagesStatement.all(guildId, pageSize, offset);
-        return messages.reverse();
     }
 
     close_db() {

@@ -41,6 +41,13 @@ type Guild = {
     created_at: string;
 };
 
+type GuildEvent = {
+    eventType: "delete" | "edit";
+    guildId: string;
+    id: string;
+    content: string | null;
+};
+
 //*======================================= Utils ========================================
 function create_jwt(userEmail: string, userId: string) {
     try {
@@ -129,6 +136,7 @@ const connectedWsClients = new Set<WebSocket>();
 const db = new Database("./db/chatapp.sqlite");
 //*================================= REQUEST HANDLER ====================================
 
+// this is connected to the websocket handlers so need to make it async i think
 function handle_msg_upload(msg: any) {
     const id: string = randomUUIDv7();
     const timestamp: string = new Date()
@@ -193,6 +201,7 @@ async function handle_ws(req: BunRequest) {
         server.upgrade(req, {
             data: {
                 guild_id: guildId,
+                user_id: userId,
             },
         })
     ) {
@@ -516,6 +525,37 @@ async function handle_get_user_guilds(req: BunRequest) {
     return corsResponse(origin, guilds, 200);
 }
 
+function handle_ws_event(message: any, ws: any) {
+    const msgObj = JSON.parse(
+        message.replace("event:", ""),
+    ) as GuildEvent;
+
+    if (msgObj.eventType === "delete") {
+        const deletedMessage = db.delete_message(
+            msgObj.id,
+            ws.data.user_id,
+        );
+
+        if (!deletedMessage) return;
+    }
+
+    if (msgObj.eventType === "edit") {
+        const editedMessage = db.edit_message(
+            msgObj.id,
+            ws.data.user_id,
+            msgObj.content as string,
+        );
+
+        if (!editedMessage) return;
+    }
+
+    connectedWsClients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    });
+}
+
 //*===================================== SERVER =========================================
 const server = Bun.serve({
     port: 5000,
@@ -531,9 +571,9 @@ const server = Bun.serve({
     routes: {
         "/grab_old_msgs": handle_get_messages, // get
         "/ws": handle_ws, // get
+        "/get_user": handle_get_user, // get
         "/register": handle_register, // post
         "/login": handle_login, // post
-        "/get_user": handle_get_user, // get
         "/validate_auth": handle_validate_auth, // local connection // get
         "/validate_user_in_guild": handle_check_user_is_in_guild, // local connection // get
         "/create_guild": handle_create_guild, // post
@@ -543,15 +583,21 @@ const server = Bun.serve({
     },
     websocket: {
         async message(ws: any, message: any) {
-            const msgObj = JSON.parse(message);
+            if (message.startsWith("event:")) {
+                handle_ws_event(message, ws);
+            }
 
-            const newMessage = handle_msg_upload(msgObj);
+            if (message.startsWith("message:")) {
+                const msgObj = JSON.parse(message.replace("message:", ""));
 
-            connectedWsClients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(newMessage));
-                }
-            });
+                const newMessage = handle_msg_upload(msgObj);
+
+                connectedWsClients.forEach((client) => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send("message:" + JSON.stringify(newMessage));
+                    }
+                });
+            }
         },
 
         async open(ws: any) {
