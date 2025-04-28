@@ -287,20 +287,22 @@ export default function ChatInterface(
                                     {message.content}
                                 </pre>
                             </div>
-                            <Button
-                                variant={"destructive"}
-                                id={`delete-btn-${message.id}`}
-                                onClick={delete_message}
-                                className={"w-6 h-6 rounded-sm"}
-                            >
-                                <Trash2 />
-                            </Button>
                             {message.author_id === userId
                                 ? (
-                                    <EditDialog
-                                        msgId={message.id}
-                                        updateMessage={edit_message}
-                                    />
+                                    <>
+                                        <Button
+                                            variant={"destructive"}
+                                            id={`delete-btn-${message.id}`}
+                                            onClick={delete_message}
+                                            className={"w-6 h-6 rounded-sm"}
+                                        >
+                                            <Trash2 />
+                                        </Button>
+                                        <EditDialog
+                                            msgId={message.id}
+                                            updateMessage={edit_message}
+                                        />
+                                    </>
                                 )
                                 : null}
                         </div>

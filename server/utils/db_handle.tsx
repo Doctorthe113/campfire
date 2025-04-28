@@ -144,8 +144,6 @@ export default class DB {
         const message: Message = this.get_message(id = id)[0];
 
         if (message.author_id !== author_id) {
-            console.log(message.author_id, author_id);
-
             return false;
         }
 
