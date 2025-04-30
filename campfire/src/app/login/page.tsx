@@ -41,17 +41,6 @@ export default function Login() {
             return;
         }
 
-        if (password.length < 8) {
-            toast("Password too short.", {
-                description: "Password must be at least 8 characters long.",
-                action: {
-                    label: "Okay",
-                    onClick: () => {},
-                },
-            });
-            return;
-        }
-
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             toast("Invalid email.", {
