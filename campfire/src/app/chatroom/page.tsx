@@ -15,7 +15,7 @@ const get_user = async (userEmail: string) => {
             process.env.NODE_ENV === "development"
                 ? "https"
                 : "http"
-        }://localhost:5000/get_user?user_email=${userEmail}`,
+        }://127.0.0.1:5000/get_user?user_email=${userEmail}`,
     )).json();
 };
 

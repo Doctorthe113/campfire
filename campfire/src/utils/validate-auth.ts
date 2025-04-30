@@ -10,7 +10,7 @@ export async function validate_auth(cookieStore: any) {
             process.env.NODE_ENV === "development"
                 ? "https"
                 : "http"
-        }://localhost:5000/validate_auth?token=${sessionToken}&user_id=${userId}&user_email=${userEmail}`,
+        }://127.0.0.1:5000/validate_auth?token=${sessionToken}&user_id=${userId}&user_email=${userEmail}`,
     );
 
     if (res.status === 200) {

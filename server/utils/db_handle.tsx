@@ -160,8 +160,6 @@ export default class DB {
         const message: Message = this.get_message(id = id)[0];
 
         if (message.author_id !== author_id) {
-            console.log(message.author_id, author_id);
-
             return false;
         }
 
@@ -275,7 +273,7 @@ export default class DB {
     join_guild(data: GuildUsers) {
         const getGuild = this.get_guild(data.guild_id);
 
-        if (getGuild === false) {
+        if (Boolean(getGuild) === false) {
             throw new Error("Guild does not exist");
         }
 
@@ -331,6 +329,33 @@ export default class DB {
         `);
 
         return getGuildsStatement.all(userId);
+    }
+
+    delete_guild(guildId: UUID, userId: UUID) {
+        const guildInfo: Guild = this.db.query(
+            `SELECT * FROM guilds WHERE id = ?`,
+        ).all(guildId)[0] as Guild;
+
+        if (guildInfo.owner !== userId) {
+            return false;
+        }
+
+        this.db.prepare("DELETE FROM guilds WHERE id = ?").run(guildId);
+        this.db.prepare("DELETE FROM guild_users WHERE guild_id = ?").run(
+            guildId,
+        );
+        this.db.prepare("DELETE FROM messages WHERE guild = ?").run(guildId);
+
+        return true;
+    }
+
+    leave_guild(guildId: UUID, userId: UUID) {
+        return this.db.prepare(
+            "DELETE FROM guild_users WHERE guild_id = ? AND user_id = ?",
+        ).run(
+            guildId,
+            userId,
+        );
     }
 
     close_db() {

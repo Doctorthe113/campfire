@@ -1,10 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { CornerDownLeft, SquarePen, Trash2 } from "lucide-react";
+import { CornerDownLeft, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EditDialog } from "@/components/edit-dialog";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 type Message = {
     id: string;
@@ -118,10 +119,7 @@ export default function ChatInterface(
     };
 
     // delete message
-    const delete_message = async (e: any) => {
-        e.preventDefault();
-        const msgId = e.target.id.replace("delete-btn-", "");
-
+    const delete_message = async (msgId: string) => {
         ws?.send(
             "event:" +
                 JSON.stringify({
@@ -169,6 +167,7 @@ export default function ChatInterface(
     const handle_ws_events = (e: any) => {
         const parsedMsg = JSON.parse(e.data.replace("event:", ""));
 
+        // early return if the event doesnt belong to the current guild
         if (parsedMsg.guild !== guildId) {
             return;
         }
@@ -272,32 +271,37 @@ export default function ChatInterface(
                                 } px-2 rounded-sm py-0.5`}
                                 key={`message-body-div${message.id}`}
                             >
-                                <div className="text-sm flex">
+                                <div className="text-sm flex items-center">
                                     <span className="text-accent-foreground">
                                         {message.author_name}
                                     </span>
                                     <span className="min-w-4 text-center">
                                         -
                                     </span>
-                                    <span className="text-muted-foreground min-w-40">
+                                    <span className="text-muted-foreground text-xs min-w-34">
                                         {format_time(message.created_at)}
                                     </span>
                                 </div>
-                                <pre className="text-sm font-serif leading-tight wrap-anywhere text-wrap">
+                                <pre className="text-sm font-sans2 leading-tight wrap-anywhere text-wrap">
                                     {message.content}
                                 </pre>
                             </div>
                             {message.author_id === userId
                                 ? (
                                     <>
-                                        <Button
-                                            variant={"destructive"}
-                                            id={`delete-btn-${message.id}`}
-                                            onClick={delete_message}
-                                            className={"w-6 h-6 rounded-sm"}
+                                        <ConfirmationDialog
+                                            confirmationMsg="Do you want to delete this message?"
+                                            confirmationFunction={() =>
+                                                delete_message(message.id)}
                                         >
-                                            <Trash2 />
-                                        </Button>
+                                            <Button
+                                                variant={"outline"}
+                                                id={`delete-btn-${message.id}`}
+                                                className={"w-6 h-6 rounded-sm border-0 text-destructive"}
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </ConfirmationDialog>
                                         <EditDialog
                                             msgId={message.id}
                                             updateMessage={edit_message}

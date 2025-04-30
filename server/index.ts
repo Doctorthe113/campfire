@@ -344,8 +344,8 @@ async function handle_register(req: BunRequest) {
 // get - nextjs
 async function handle_get_user(req: BunRequest) {
     if (
-        !(req.url.startsWith("http://localhost") ||
-            req.url.startsWith("https://localhost"))
+        !(req.url.startsWith("http://127.0.0.1") ||
+            req.url.startsWith("https://127.0.0.1"))
     ) {
         return corsResponse("*", "Unauthorized", 401);
     }
@@ -361,8 +361,8 @@ async function handle_validate_auth(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
     if (
-        !(req.url.startsWith("http://localhost") ||
-            req.url.startsWith("https://localhost"))
+        !(req.url.startsWith("http://127.0.0.1") ||
+            req.url.startsWith("https://127.0.0.1"))
     ) {
         return corsResponse(origin, "Unauthorized", 401);
     }
@@ -390,8 +390,8 @@ async function handle_check_user_is_in_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
     if (
-        !(req.url.startsWith("http://localhost") ||
-            req.url.startsWith("https://localhost"))
+        !(req.url.startsWith("http://127.0.0.1") ||
+            req.url.startsWith("https://127.0.0.1"))
     ) {
         return corsResponse(origin, "Unauthorized", 401);
     }
@@ -464,6 +464,22 @@ async function handle_create_guild(req: BunRequest) {
 async function handle_join_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
+    if (
+        req.url.startsWith("https://127.0.0.1") ||
+        req.url.startsWith("http://127.0.0.1")
+    ) {
+        const url = new URL(req.url);
+        const guildId = url.searchParams.get("guild_id") as string;
+        const userId = url.searchParams.get("user_id") as string;
+
+        try {
+            db.join_guild({ user_id: userId, guild_id: guildId });
+            return corsResponse(origin, "Joined guild", 200);
+        } catch (error) {
+            return corsResponse(origin, error as string, 403);
+        }
+    }
+
     const isAuthenticated = await verify_auth(req);
     if (!isAuthenticated) {
         return corsResponse(origin, "User is not authenticated", 403);
@@ -488,8 +504,8 @@ async function handle_get_guild(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
     if (
-        !(req.url.startsWith("http://localhost") ||
-            req.url.startsWith("https://localhost"))
+        !(req.url.startsWith("http://127.0.0.1") ||
+            req.url.startsWith("https://127.0.0.1"))
     ) {
         return corsResponse(origin, "Unauthorized", 401);
     }
@@ -511,8 +527,8 @@ async function handle_get_user_guilds(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
     if (
-        !(req.url.startsWith("http://localhost") ||
-            req.url.startsWith("https://localhost"))
+        !(req.url.startsWith("http://127.0.0.1") ||
+            req.url.startsWith("https://127.0.0.1"))
     ) {
         return corsResponse(origin, "Unauthorized", 401);
     }
@@ -523,6 +539,46 @@ async function handle_get_user_guilds(req: BunRequest) {
     const guilds = db.get_all_guilds_of_user(userId);
 
     return corsResponse(origin, guilds, 200);
+}
+
+// get - has auth
+async function handle_guild_delete(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "User is not authenticated", 403);
+    }
+
+    //@ts-ignore
+    const userId = req.cookies.get("user_id") as string;
+    const guild_id = new URL(req.url).searchParams.get("guild_id") as string;
+
+    if (!db.delete_guild(guild_id, userId)) {
+        return corsResponse(origin, "Invalid operation", 403);
+    }
+
+    return corsResponse(origin, "Deleted guild", 200);
+}
+
+// get - has auth
+async function handle_guild_leave(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "User is not authenticated", 403);
+    }
+
+    //@ts-ignore
+    const userId = req.cookies.get("user_id") as string;
+    const guild_id = new URL(req.url).searchParams.get("guild_id") as string;
+
+    if (db.leave_guild(guild_id, userId).changes === 0) {
+        return corsResponse(origin, "Invalid operation", 403);
+    }
+
+    return corsResponse(origin, "Left guild", 200);
 }
 
 function handle_ws_event(message: any, ws: any) {
@@ -569,6 +625,9 @@ const server = Bun.serve({
         }
         : {}),
     routes: {
+        "/hello": () => {
+            return new Response("sup bitch");
+        },
         "/grab_old_msgs": handle_get_messages, // get
         "/ws": handle_ws, // get
         "/get_user": handle_get_user, // get
@@ -580,6 +639,8 @@ const server = Bun.serve({
         "/join_guild": handle_join_guild, // get
         "/get_guild": handle_get_guild, // local connection // get
         "/get_user_guilds": handle_get_user_guilds, // local connection // get
+        "/delete_guild": handle_guild_delete, // get
+        "/leave_guild": handle_guild_leave, // get
     },
     websocket: {
         async message(ws: any, message: any) {

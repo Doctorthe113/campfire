@@ -24,7 +24,7 @@ const validate_user_access = async (guildId: string, userId: string) => {
             process.env.NODE_ENV === "development"
                 ? "https"
                 : "http"
-        }://localhost:5000/validate_user_in_guild?user_id=${userId}&guild_id=${guildId}`,
+        }://127.0.0.1:5000/validate_user_in_guild?user_id=${userId}&guild_id=${guildId}`,
     );
 
     if (isValid.status !== 200) {
@@ -39,7 +39,7 @@ const get_guild = async (guildId: string) => {
                 process.env.NODE_ENV === "development"
                     ? "https"
                     : "http"
-            }://localhost:5000/get_guild?guild_id=${guildId}`,
+            }://127.0.0.1:5000/get_guild?guild_id=${guildId}`,
         )).json();
     } catch {
         return redirect("/chatroom");
@@ -52,7 +52,7 @@ const get_user = async (userEmail: string) => {
             process.env.NODE_ENV === "development"
                 ? "https"
                 : "http"
-        }://localhost:5000/get_user?user_email=${userEmail}`,
+        }://127.0.0.1:5000/get_user?user_email=${userEmail}`,
     )).json();
 };
 

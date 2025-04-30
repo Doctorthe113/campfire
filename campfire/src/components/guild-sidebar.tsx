@@ -1,3 +1,4 @@
+import { GuildDialog } from "@/components/guild-dialog";
 import {
     Sidebar,
     SidebarContent,
@@ -9,6 +10,14 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
+import Link from "next/link";
+import {
+    GuildPreference,
+    GuildPreferenceContextMenu,
+} from "./guild-preference";
+import InviteCopy from "./invite-copy";
+import { ContextMenu, ContextMenuTrigger } from "./ui/context-menu";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -18,10 +27,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { GuildDialog } from "@/components/guild-dialog";
-import Link from "next/link";
-import Image from "next/image";
-import InviteCopy from "./invite-copy";
 
 type User = {
     id: string;
@@ -39,7 +44,7 @@ const get_user_guilds = async (userId: string) => {
             process.env.NODE_ENV === "development"
                 ? "https"
                 : "http"
-        }://localhost:5000/get_user_guilds?user_id=${userId}`,
+        }://127.0.0.1:5000/get_user_guilds?user_id=${userId}`,
     )).json();
 };
 
@@ -54,14 +59,14 @@ export async function GuildSidebar(
 
     return (
         <Sidebar variant="inset" collapsible="offcanvas">
-            <SidebarHeader className="p-0 bg-background md:rounded-lg md:border-2 border-foreground">
+            <SidebarHeader className="p-0 bg-background md:rounded-lg md:border-1 border-border">
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        className="flex h-16 m-0 p-0 focus-visible:disabled md:rounded-lg rounded-none"
+                        className="flex h-16 m-0 p-0 md:rounded-lg rounded-none border-none focus-visible:border-none active:border-none"
                         asChild
                     >
-                        <SidebarMenuButton>
-                            <div className="flex h-full m-0 items-center w-full px-2">
+                        <SidebarMenuButton className="" asChild>
+                            <div className="flex h-full m-0 items-center w-full px-2 py-1 border-none">
                                 <Image
                                     src={userInfo.avatar as string}
                                     id="avatar-img"
@@ -132,57 +137,75 @@ export async function GuildSidebar(
                                 className="focus:bg-background"
                                 disabled={!guildId}
                             >
-                                <InviteCopy guildId={currentGuildName} />
+                                <InviteCopy guildId={guildId} />
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarHeader>
-            <SidebarContent className="m-0 pt-0">
+            <SidebarContent className="m-0 pt-0" id="guild-selector">
                 <SidebarGroup className="p-0">
                     <SidebarGroupLabel>Guilds</SidebarGroupLabel>
                     <SidebarMenu>
                         {guildList.map((guild: any) => (
                             <SidebarMenuItem
                                 key={guild.id}
-                                className="border-0 p-0 rounded-none"
+                                className="m-0 p-0 px-2 active:scale-90 active:bg-background active:rounded-lg duration-10 border-border border-1 hover:rounded-lg md:rounded-lg rounded-none hover:bg-background hover:border-foreground h-fit flex items-center btn"
+                                id={`sidebar-menu-item-${guild.id}`}
                             >
-                                <SidebarMenuButton
-                                    asChild
-                                    className="m-0 p-0 px-2 active:scale-90 active:rounded-lg duration-10 border-border border-1 hover:rounded-lg md:rounded-lg rounded-none hover:bg-background hover:border-foreground h-fit"
-                                >
-                                    <div className="flex justify-start items-center h-max p-0">
-                                        <Link
-                                            className="grow h-max text-sm flex items-center"
-                                            href={`/chatroom/${guild.id}`}
+                                <ContextMenu>
+                                    <ContextMenuTrigger
+                                        className="bg-transparent hover:bg-transparent active:bg-transparent focus-visible:bg-transparent"
+                                        asChild
+                                    >
+                                        <SidebarMenuButton
+                                            asChild
+                                            className="p-0 m-0 hover:bg-transparent active:bg-transparent"
                                         >
-                                            <Image
-                                                src={guild.avatar}
-                                                alt=""
-                                                width={16}
-                                                height={16}
-                                                className="inline rounded-[4px] h-6 w-6 my-2 mr-2"
-                                            >
-                                            </Image>
-                                            <span
-                                                className={`${
-                                                    guild.name ==
-                                                            currentGuildName
-                                                        ? "text-primary"
-                                                        : ""
-                                                }`}
-                                            >
-                                                {guild.name}
-                                            </span>
-                                        </Link>
-                                    </div>
-                                </SidebarMenuButton>
+                                            <div className="flex justify-start items-center h-max p-0">
+                                                <Link
+                                                    className="grow h-max text-sm flex items-center"
+                                                    href={`/chatroom/${guild.id}`}
+                                                >
+                                                    <Image
+                                                        src={guild.avatar}
+                                                        alt=""
+                                                        width={16}
+                                                        height={16}
+                                                        className="inline rounded-[4px] h-6 w-6 my-2 mr-2"
+                                                    >
+                                                    </Image>
+                                                    <span
+                                                        className={`${
+                                                            guild.name ==
+                                                                    currentGuildName
+                                                                ? "text-primary"
+                                                                : ""
+                                                        }`}
+                                                    >
+                                                        {guild.name}
+                                                    </span>
+                                                </Link>
+                                            </div>
+                                        </SidebarMenuButton>
+                                    </ContextMenuTrigger>
+                                    <GuildPreferenceContextMenu
+                                        isAllowedDelete={guild.owner ===
+                                            userInfo.id}
+                                        guildId={guild.id}
+                                    />
+                                </ContextMenu>
+                                <GuildPreference
+                                    isAllowedDelete={guild.owner ===
+                                        userInfo.id}
+                                    guildId={guild.id}
+                                />
                             </SidebarMenuItem>
                         ))}
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter className="p-0 md:rounded-lg md:border-2 border-text bg-background">
+            <SidebarFooter className="p-0 md:rounded-lg md:border-1 border-border bg-background">
                 <div className="h-13 p-2 flex items-center justify-evenly">
                     <GuildDialog />
                 </div>

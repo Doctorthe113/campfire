@@ -17,19 +17,24 @@ import { toast } from "sonner";
 
 export function GuildDialog() {
     // sets api url based on env
-    let apiDomain: string;
     const env = process.env.NODE_ENV;
+    let apiDomain: string;
+    let domain: string;
     if (env === "production") {
         apiDomain = "api.campfire.doctorthe113.com";
+        domain = "https://campfire.doctorthe113.com";
     } else {
         apiDomain = "localhost:5000";
+        domain = "http://localhost:3000";
     }
 
     const handle_join_guild = async (e: any) => {
         e.preventDefault();
         const guildId =
             (document.getElementById("join-guild-id") as HTMLInputElement)
-                .value;
+                .value.replace(`${domain}/api/invite?guild_id=`, "");
+
+        console.log(guildId);
 
         if (guildId === "") {
             toast("Please fill in all fields.", {
