@@ -117,7 +117,7 @@ export default async function Home() {
                         <Checkbox
                             checked={false}
                             disabled
-                            className="disabled:opacity-100"
+                            className="cursor-default disabled:opacity-100"
                             id="second-checkbox"
                         >
                         </Checkbox>
@@ -132,7 +132,7 @@ export default async function Home() {
                         <Checkbox
                             checked={true}
                             disabled
-                            className="disabled:opacity-100"
+                            className="cursor-default disabled:opacity-100"
                             id="third-checkbox"
                         >
                         </Checkbox>
@@ -147,7 +147,7 @@ export default async function Home() {
                         <Checkbox
                             checked={false}
                             disabled
-                            className="disabled:opacity-100"
+                            className="cursor-default disabled:opacity-100"
                             id="fourth-checkbox"
                         >
                         </Checkbox>

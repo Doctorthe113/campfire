@@ -29,6 +29,7 @@ export default function ChatInterface(
     const [messages, setMessages] = useState([] as Array<Message>);
     const [ws, setWs] = useState(null as WebSocket | null);
     const [msgContent, setMsgContent] = useState("");
+    const [isLaoded, setIsloaded] = useState(false);
 
     // sets api url based on env
     let apiDomain: string;
@@ -201,18 +202,18 @@ export default function ChatInterface(
 
     // on mount
     useEffect(() => {
+        // changes focus to textarea
+        const textArea = document.getElementById(
+            "chat-text-area",
+        ) as HTMLInputElement;
+        textArea.focus();
+
         // grabs all the old messages
         async function _() {
             const oldMessages: Array<Message> = await grab_old_msgs(guildId);
             setMessages(oldMessages);
         }
         _();
-
-        // changes focus to textarea
-        const textArea = document.getElementById(
-            "chat-text-area",
-        ) as HTMLInputElement;
-        textArea.focus();
 
         // sets up websocket
         const ws = new WebSocket(
@@ -240,79 +241,91 @@ export default function ChatInterface(
         }
 
         setWs(ws);
+        setIsloaded(true);
     }, []);
 
     return (
         <div className="flex flex-col grow min-h-0">
-            <div className="grow w-full flex flex-col overflow-y-auto min-h-0">
-                {messages.map((message: Message) => {
-                    return (
-                        <div
-                            className={`flex w-full lg:max-w-2/3 my-1 gap-2 ${
-                                message.author_id === userId
-                                    ? "ml-auto flex-row-reverse"
-                                    : ""
-                            }`}
-                            id={message.id}
-                            key={`message-div${message.id}`}
-                        >
-                            <img
-                                src={message.avatar}
-                                alt=""
-                                className="w-10 h-10 rounded-sm"
-                                key={`message-avatar${message.id}`}
-                            >
-                            </img>
-                            <div
-                                className={`flex flex-col w-max max-w-9/12 ${
-                                    message.author_id === userId
-                                        ? "bg-accent"
-                                        : "bg-muted"
-                                } px-2 rounded-sm py-0.5`}
-                                key={`message-body-div${message.id}`}
-                            >
-                                <div className="text-sm flex items-center">
-                                    <span className="text-accent-foreground">
-                                        {message.author_name}
-                                    </span>
-                                    <span className="min-w-4 text-center">
-                                        -
-                                    </span>
-                                    <span className="text-muted-foreground text-xs min-w-34">
-                                        {format_time(message.created_at)}
-                                    </span>
-                                </div>
-                                <pre className="text-sm font-sans2 leading-tight wrap-anywhere text-wrap">
+            {isLaoded
+                ? (
+                    <div className="grow w-full flex flex-col overflow-y-auto min-h-0">
+                        {messages.map((message: Message) => {
+                            return (
+                                <div
+                                    className={`flex w-full lg:max-w-2/3 my-1 gap-2 ${
+                                        message.author_id === userId
+                                            ? "ml-auto flex-row-reverse"
+                                            : ""
+                                    }`}
+                                    id={message.id}
+                                    key={`message-div${message.id}`}
+                                >
+                                    <img
+                                        src={message.avatar}
+                                        alt=""
+                                        className="w-10 h-10 rounded-sm"
+                                        key={`message-avatar${message.id}`}
+                                    >
+                                    </img>
+                                    <div
+                                        className={`flex flex-col w-max max-w-9/12 ${
+                                            message.author_id === userId
+                                                ? "bg-accent"
+                                                : "bg-muted"
+                                        } px-2 rounded-sm py-0.5`}
+                                        key={`message-body-div${message.id}`}
+                                    >
+                                        <div className="text-sm flex items-center">
+                                            <span className="text-accent-foreground">
+                                                {message.author_name}
+                                            </span>
+                                            <span className="min-w-4 text-center">
+                                                -
+                                            </span>
+                                            <span className="text-muted-foreground text-xs min-w-34">
+                                                {format_time(
+                                                    message.created_at,
+                                                )}
+                                            </span>
+                                        </div>
+                                        <pre className="text-sm font-sans2 leading-tight wrap-anywhere text-wrap">
                                     {message.content}
-                                </pre>
-                            </div>
-                            {message.author_id === userId
-                                ? (
-                                    <>
-                                        <ConfirmationDialog
-                                            confirmationMsg="Do you want to delete this message?"
-                                            confirmationFunction={() =>
-                                                delete_message(message.id)}
-                                        >
-                                            <Button
-                                                variant={"outline"}
-                                                id={`delete-btn-${message.id}`}
-                                                className={"w-6 h-6 rounded-sm border-0 text-destructive"}
-                                            >
-                                                <Trash2 />
-                                            </Button>
-                                        </ConfirmationDialog>
-                                        <EditDialog
-                                            msgId={message.id}
-                                            updateMessage={edit_message}
-                                        />
-                                    </>
-                                )
-                                : null}
-                        </div>
-                    );
-                })}
-            </div>
+                                        </pre>
+                                    </div>
+                                    {message.author_id === userId
+                                        ? (
+                                            <>
+                                                <ConfirmationDialog
+                                                    confirmationMsg="Do you want to delete this message?"
+                                                    confirmationFunction={() =>
+                                                        delete_message(
+                                                            message.id,
+                                                        )}
+                                                >
+                                                    <Button
+                                                        variant={"outline"}
+                                                        id={`delete-btn-${message.id}`}
+                                                        className={"w-6 h-6 rounded-sm border-0 text-destructive"}
+                                                    >
+                                                        <Trash2 />
+                                                    </Button>
+                                                </ConfirmationDialog>
+                                                <EditDialog
+                                                    msgId={message.id}
+                                                    updateMessage={edit_message}
+                                                />
+                                            </>
+                                        )
+                                        : null}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )
+                : (
+                    <div className="grow w-full flex flex-col overflow-y-auto min-h-0">
+                    </div>
+                )}
             <form
                 className="w-full max-h-28 h-fit flex mt-2 sticky bottom-0 bg-background"
                 onSubmit={send_message}

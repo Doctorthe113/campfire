@@ -261,9 +261,12 @@ function SidebarTrigger({
     <Button
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
-      variant="ghost"
+      variant="default"
       size="icon"
-      className={cn("size-7", className)}
+      className={cn(
+        "size-7 hover:text-foreground hover:bg-accent/100 bg-transparent",
+        className,
+      )}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();

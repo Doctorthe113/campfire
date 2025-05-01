@@ -88,7 +88,7 @@ export async function GuildSidebar(
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className="w-[--radix-popper-anchor-width] bg-accent text-foreground border-1 border-foreground"
+                        className="w-[--radix-popper-anchor-width] bg-accent text-foreground border-1 border-border"
                         align="end"
                     >
                         <DropdownMenuLabel className="text-xs leading-tight">
@@ -145,12 +145,18 @@ export async function GuildSidebar(
             </SidebarHeader>
             <SidebarContent className="m-0 pt-0" id="guild-selector">
                 <SidebarGroup className="p-0">
-                    <SidebarGroupLabel>Guilds</SidebarGroupLabel>
+                    <SidebarGroupLabel className="px-1">
+                        Guilds
+                    </SidebarGroupLabel>
                     <SidebarMenu>
                         {guildList.map((guild: any) => (
                             <SidebarMenuItem
                                 key={guild.id}
-                                className="m-0 p-0 px-2 active:scale-90 active:bg-background active:rounded-lg duration-10 border-border border-1 hover:rounded-lg md:rounded-lg rounded-none hover:bg-background hover:border-foreground h-fit flex items-center btn"
+                                className={`m-0 p-0 px-1 active:scale-90 active:bg-background active:rounded-sm duration-10 hover:rounded-sm md:rounded-sm rounded-none hover:bg-background hover:border-foreground h-fit flex items-center btn ${
+                                    currentGuildName === guild.name
+                                        ? "bg-background"
+                                        : ""
+                                }`}
                                 id={`sidebar-menu-item-${guild.id}`}
                             >
                                 <ContextMenu>
@@ -172,7 +178,7 @@ export async function GuildSidebar(
                                                         alt=""
                                                         width={16}
                                                         height={16}
-                                                        className="inline rounded-[4px] h-6 w-6 my-2 mr-2"
+                                                        className="inline rounded-[4px] h-6 w-6 my-1 mr-2"
                                                     >
                                                     </Image>
                                                     <span

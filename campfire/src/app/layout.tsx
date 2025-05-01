@@ -1,19 +1,13 @@
 import { ThemeProvider } from "next-themes";
-import { Merriweather, Oxanium } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const oxanium = Oxanium({
+const customFont = DM_Sans({
     subsets: ["latin"],
     weight: ["400", "700"],
-    variable: "--font-oxanium",
-});
-
-const merriweather = Merriweather({
-    subsets: ["latin"],
-    weight: ["400", "700"],
-    variable: "--font-merriweather",
+    variable: "--font-custom",
 });
 
 export const metadata: Metadata = {
@@ -82,7 +76,7 @@ export default function RootLayout({
                     />
                 </head>
                 <body
-                    className={`${oxanium.variable} ${merriweather.variable} bg-background h-dvh w-screen font-sans`}
+                    className={`${customFont.variable} bg-background h-dvh w-screen font-sans`}
                 >
                     <ThemeProvider
                         attribute="class"

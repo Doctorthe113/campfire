@@ -21,7 +21,7 @@ export default function DarkModeToggle() {
             {!mounted ? null : (
                 <Button
                     variant="default"
-                    className={"bg-primary h-full aspect-square text-secondary border-foreground"}
+                    className={"bg-transparent h-full aspect-square text-foreground border-foreground hover:bg-accent"}
                     size="icon"
                     onClick={() =>
                         setTheme(theme === "dark" ? "light" : "dark")}
