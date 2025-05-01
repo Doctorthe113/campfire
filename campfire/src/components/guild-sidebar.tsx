@@ -59,7 +59,7 @@ export async function GuildSidebar(
 
     return (
         <Sidebar variant="inset" collapsible="offcanvas">
-            <SidebarHeader className="p-0 bg-background md:rounded-lg md:border-1 border-border">
+            <SidebarHeader className="p-0 bg-background md:rounded-lg md:border-1 border-border cursor-pointer">
                 <DropdownMenu>
                     <DropdownMenuTrigger
                         className="flex h-16 m-0 p-0 md:rounded-lg rounded-none border-none focus-visible:border-none active:border-none"
@@ -98,17 +98,17 @@ export async function GuildSidebar(
                         <DropdownMenuGroup>
                             <DropdownMenuItem className="focus:bg-background">
                                 <Link href="" className="w-full">
-                                    Update profile ⚠️🚧
+                                    Update profile ⚠️
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="focus:bg-background">
                                 <Link href="" className="w-full">
-                                    Change status ⚠️🚧
+                                    Change status ⚠️
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="focus:bg-background">
                                 <Link href="" className="w-full">
-                                    Delete account ⚠️🚧
+                                    Delete account ⚠️
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="focus:bg-background">
@@ -121,8 +121,8 @@ export async function GuildSidebar(
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-xs font-bold leading-tight">
-                            Guild Settings ⚠️🚧
+                        <DropdownMenuLabel className="text-xs leading-tight">
+                            Guild
                         </DropdownMenuLabel>
                         <DropdownMenuGroup>
                             <DropdownMenuItem
@@ -130,7 +130,7 @@ export async function GuildSidebar(
                                 disabled={!guildId}
                             >
                                 <Link href="" className="w-full">
-                                    Update guild profile ⚠️🚧
+                                    Update guild profile
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem

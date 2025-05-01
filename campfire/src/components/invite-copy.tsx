@@ -26,7 +26,7 @@ export default function InviteCopy({ guildId }: { guildId: string }) {
     return (
         <div
             onClick={copy_to_clipboard}
-            className="h-full w-full cursor-pointer"
+            className="h-full w-full cursor-copy"
         >
             Invite
         </div>

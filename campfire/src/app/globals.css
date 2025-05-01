@@ -16,6 +16,12 @@ textarea{
     @apply transition-none duration-[0] delay-0;
 }
 
+/* makes dropdown and context menu instant */
+[data-radix-popper-content-wrapper] {
+    transition: none !important;
+    opacity: 1 !important;
+  }
+
 /* ? might use it later */
 .landing-card-bg{
     background-image:

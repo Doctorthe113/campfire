@@ -251,16 +251,25 @@ async function handle_login(req: BunRequest) {
     });
     cookies.set("user_id", user.id, {
         sameSite: "none",
+        path: "/",
+        expires: new Date(Date.now() + 86400000),
+        httpOnly: true,
         secure: true,
         domain: clientDomain,
     });
     cookies.set("user_email", user.email, {
         sameSite: "none",
+        path: "/",
+        expires: new Date(Date.now() + 86400000),
+        httpOnly: true,
         secure: true,
         domain: clientDomain,
     });
     cookies.set("username", user.username, {
         sameSite: "none",
+        path: "/",
+        expires: new Date(Date.now() + 86400000),
+        httpOnly: true,
         secure: true,
         domain: clientDomain,
     });
@@ -320,16 +329,25 @@ async function handle_register(req: BunRequest) {
         });
         cookies.set("user_id", user.id, {
             sameSite: "none",
+            path: "/",
+            expires: new Date(Date.now() + 86400000),
+            httpOnly: true,
             secure: true,
             domain: clientDomain,
         });
         cookies.set("user_email", user.email, {
             sameSite: "none",
+            path: "/",
+            expires: new Date(Date.now() + 86400000),
+            httpOnly: true,
             secure: true,
             domain: clientDomain,
         });
         cookies.set("username", user.username, {
             sameSite: "none",
+            path: "/",
+            expires: new Date(Date.now() + 86400000),
+            httpOnly: true,
             secure: true,
             domain: clientDomain,
         });

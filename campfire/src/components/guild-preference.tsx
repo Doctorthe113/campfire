@@ -58,6 +58,7 @@ export function GuildPreference(
             <DropdownMenuContent
                 side="bottom"
                 align="end"
+                alignOffset={-6}
                 className="bg-accent"
             >
                 {isAllowedDelete
@@ -81,7 +82,9 @@ export function GuildPreference(
                     </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="focus:bg-background">
-                    <span className="w-full cursor-pointer">Notifications</span>
+                    <span className="w-full cursor-pointer">
+                        Notifications ⚠️
+                    </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="focus:bg-background">
                     <InviteCopy guildId={guildId} />

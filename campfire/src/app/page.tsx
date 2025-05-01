@@ -9,6 +9,7 @@ import {
     Github,
     MonitorSmartphone,
     Smartphone,
+    Twitter,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,7 +18,7 @@ export default async function Home() {
     return (
         <main className="bg-background flex h-screen w-screen flex-col gap-3 items-center justify-start">
             <div
-                className="bg-card w-full flex justify-center p-1"
+                className="bg-card w-full flex justify-center p-1 sticky top-0"
                 id="header"
             >
                 <div className="flex justify-between w-full max-w-3xl">
@@ -58,9 +59,9 @@ export default async function Home() {
                         fixing bugs over time. You can check out my github from
                         below
                     </h3>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full flex-wrap justify-center">
                         <Button
-                            variant={"default"}
+                            variant={"link"}
                             className="text-secondary font-bold"
                             asChild
                         >
@@ -70,7 +71,17 @@ export default async function Home() {
                             </Link>
                         </Button>
                         <Button
-                            variant="default"
+                            variant={"link"}
+                            className="text-secondary font-bold"
+                            asChild
+                        >
+                            <Link href={"https://x.com/Doctorthe113"}>
+                                Follow
+                                <Twitter />
+                            </Link>
+                        </Button>
+                        <Button
+                            variant="link"
                             className="text-secondary font-bold"
                             asChild
                         >
