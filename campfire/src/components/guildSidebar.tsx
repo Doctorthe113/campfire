@@ -12,11 +12,8 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import Link from "next/link";
-import {
-    GuildPreference,
-    GuildPreferenceContextMenu,
-} from "./guild-preference";
-import InviteCopy from "./invite-copy";
+import { GuildPreference, GuildPreferenceContextMenu } from "./guildPreference";
+import InviteCopy from "./inviteCopy";
 import { ContextMenu, ContextMenuTrigger } from "./ui/context-menu";
 import {
     DropdownMenu,
@@ -34,6 +31,7 @@ type User = {
     email: string;
     password: string;
     avatar: string | Uint8Array;
+    status: string;
     created_at: string;
 };
 
@@ -78,10 +76,10 @@ export async function GuildSidebar(
                                 </Image>
                                 <div className="flex flex-col h-14 justify-between pl-2 py-1 grow">
                                     <span className="font-bold text-primary text-lg w-full m-0 h-5 leading-tight text-right">
-                                        {userInfo.username.toUpperCase()}
+                                        {userInfo.username}
                                     </span>
                                     <span className="text-[11px] w-full text-right m-0 grow leading-tight">
-                                        {userInfo.email}
+                                        {userInfo.status}
                                     </span>
                                 </div>
                             </div>
@@ -97,8 +95,8 @@ export async function GuildSidebar(
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <DropdownMenuItem className="focus:bg-background">
-                                <Link href="" className="w-full">
-                                    Update profile ⚠️
+                                <Link href="/profile" className="w-full">
+                                    User settings
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="focus:bg-background">

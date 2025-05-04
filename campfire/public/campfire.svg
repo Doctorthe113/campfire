@@ -61,12 +61,12 @@
        inkscape:collect="always"
        style="color-interpolation-filters:sRGB"
        id="filter1"
-       x="-0.027"
-       y="-0.027"
-       width="1.054"
-       height="1.054"><feGaussianBlur
+       x="-0.0097199998"
+       y="-0.0097199998"
+       width="1.01944"
+       height="1.01944"><feGaussianBlur
          inkscape:collect="always"
-         stdDeviation="11.249855"
+         stdDeviation="4.0499478"
          id="feGaussianBlur1" /></filter></defs><g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"

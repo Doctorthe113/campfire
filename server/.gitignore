@@ -6,6 +6,9 @@ out
 dist
 *.tgz
 
+*.key
+*.crt
+
 # code coverage
 coverage
 *.lcov

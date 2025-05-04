@@ -80,7 +80,7 @@ export default function Login() {
         );
 
         if (res.status === 200) {
-            redirect("/chatroom");
+            redirect("/login");
         } else if (res.status === 403) {
             toast("Failed to register.", {
                 description: "Email or username is already in use.",
@@ -103,7 +103,7 @@ export default function Login() {
             className="flex h-screen w-screen items-center justify-center"
             onKeyDown={handle_enter_press}
         >
-            <Card className="w-1/4">
+            <Card className="w-sm">
                 <CardHeader className="space-y-1">
                     <CardTitle className="text-2xl">REGISTER</CardTitle>
                     <CardDescription>

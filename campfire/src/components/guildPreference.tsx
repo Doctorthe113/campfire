@@ -8,7 +8,7 @@ import {
 } from "./ui/dropdown-menu";
 import { ContextMenuContent, ContextMenuItem } from "./ui/context-menu";
 import { MoreHorizontal } from "lucide-react";
-import InviteCopy from "./invite-copy";
+import InviteCopy from "./inviteCopy";
 
 // todo: refactor needed
 let apiDomain: string;
@@ -58,7 +58,7 @@ export function GuildPreference(
             <DropdownMenuContent
                 side="bottom"
                 align="end"
-                alignOffset={-6}
+                alignOffset={-4}
                 className="bg-accent"
             >
                 {isAllowedDelete

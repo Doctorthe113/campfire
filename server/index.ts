@@ -30,6 +30,7 @@ type User = {
     email: string;
     password: string;
     avatar: string | Uint8Array;
+    status: string;
     created_at: string;
 };
 
@@ -240,6 +241,12 @@ async function handle_login(req: BunRequest) {
 
     // create jwt, set cookie, and return
     const token = await create_jwt(user.email, user.id);
+
+    cookies.delete("session");
+    cookies.delete("user_id");
+    cookies.delete("user_email");
+    cookies.delete("username");
+
     cookies.set("session", token, {
         maxAge: 60 * 60 * 24 * 7,
         httpOnly: true,
@@ -278,6 +285,7 @@ async function handle_login(req: BunRequest) {
 }
 
 // post
+// todo: need to fix the cookies not being rewritten
 async function handle_register(req: BunRequest) {
     const origin = req.headers.get("Origin") as string;
 
@@ -312,12 +320,19 @@ async function handle_register(req: BunRequest) {
         email: email,
         password: hashedPassword,
         avatar: avatarUrl,
+        status: "Hey there!",
         created_at: new Date().toISOString().slice(0, 19).replace("T", " "),
     };
 
     try {
         db.create_user(user);
         const token = await create_jwt(user.email, user.id);
+
+        cookies.delete("session");
+        cookies.delete("user_id");
+        cookies.delete("user_email");
+        cookies.delete("username");
+
         cookies.set("session", token, {
             maxAge: 60 * 60 * 24 * 7,
             httpOnly: true,
@@ -372,6 +387,21 @@ async function handle_get_user(req: BunRequest) {
     const user = db.get_user(email);
 
     return corsResponse("*", user, 200);
+}
+
+// get - has auth
+async function handle_profile_update(req: BunRequest) {
+
+}
+
+// get -has auth
+async function handle_account_update(req: BunRequest) {
+
+}
+
+// get - has auth
+async function handle_password_update(req: BunRequest) {
+
 }
 
 // get - validates the token for nextjs

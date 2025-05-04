@@ -16,6 +16,7 @@ type User = {
     email: string;
     password: string;
     avatar: string | Uint8Array;
+    status: string;
     created_at: string;
 };
 
@@ -51,7 +52,8 @@ export default class DB {
                     username TEXT UNIQUE NOT NULL,
                     email TEXT UNIQUE NOT NULL,
                     password TEXT NOT NULL,
-                    avatar TEXT NOT NULL
+                    avatar TEXT NOT NULL,
+                    status TEXT
                 );
                 CREATE TABLE IF NOT EXISTS messages (
                     id TEXT UNIQUE PRIMARY KEY NOT NULL,
@@ -205,7 +207,7 @@ export default class DB {
     //* user related db methods
     create_user(user: User) {
         const insertStatment = this.db.prepare(
-            "INSERT INTO users (id, username, email, password, avatar, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO users (id, username, email, password, avatar, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
         );
         insertStatment.run(
             user.id,
@@ -213,6 +215,7 @@ export default class DB {
             user.email,
             user.password,
             user.avatar,
+            user.status,
             user.created_at,
         );
     }

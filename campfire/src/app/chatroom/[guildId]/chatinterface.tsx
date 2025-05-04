@@ -5,7 +5,7 @@ import { CornerDownLeft, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EditDialog } from "@/components/edit-dialog";
-import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { ConfirmationDialog } from "@/components/confirmationDialog";
 
 type Message = {
     id: string;
@@ -248,7 +248,7 @@ export default function ChatInterface(
         <div className="flex flex-col grow min-h-0">
             {isLaoded
                 ? (
-                    <div className="grow w-full flex flex-col overflow-y-auto min-h-0">
+                    <div className="grow w-full flex flex-col overflow-y-auto min-h-0 px-2">
                         {messages.map((message: Message) => {
                             return (
                                 <div
