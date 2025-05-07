@@ -37,7 +37,7 @@ export function GuildDialog() {
         console.log(guildId);
 
         if (guildId === "") {
-            toast("Please fill in all fields.", {
+            toast.error("Please fill in all fields.", {
                 description: "Guild ID is empty.",
                 action: {
                     label: "Okay",
@@ -57,7 +57,7 @@ export function GuildDialog() {
         } else {
             console.log(await res.text());
 
-            toast("Failed to join guild.", {
+            toast.error("Failed to join guild.", {
                 description: "Guild may not exist or you already joined it.",
                 action: {
                     label: "Okay",
@@ -74,7 +74,7 @@ export function GuildDialog() {
                 .value;
 
         if (guildName === "") {
-            toast("Please fill in all fields.", {
+            toast.error("Please fill in all fields.", {
                 description: "Guild name is empty.",
                 action: {
                     label: "Okay",
@@ -103,7 +103,7 @@ export function GuildDialog() {
         if (res.status === 200) {
             redirect(`/chatroom/${guildId}`);
         } else if (res.status === 403) {
-            toast("Failed to join guild.", {
+            toast.error("Failed to join guild.", {
                 description: "Guild may not exist or you already joined it.",
                 action: {
                     label: "Okay",

@@ -57,7 +57,7 @@ export default async function Home() {
                         Jose for signing and verifying JWT tokens, ShadCN's
                         radix and lucide. I plan on adding new features and
                         fixing bugs over time. You can check out my github from
-                        below
+                        below. Currently in alpha.
                     </h3>
                     <div className="flex gap-2 w-full flex-wrap justify-center">
                         <Button

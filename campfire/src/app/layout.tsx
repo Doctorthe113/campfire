@@ -8,6 +8,7 @@ const customFont = DM_Sans({
     subsets: ["latin"],
     weight: ["400", "700"],
     variable: "--font-custom",
+    fallback: ["system-ui", "sans-serif"],
 });
 
 export const metadata: Metadata = {

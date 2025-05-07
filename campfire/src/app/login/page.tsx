@@ -16,9 +16,6 @@ import { toast } from "sonner";
 import { redirect } from "next/navigation";
 
 export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-
     // sets api url based on env
     let apiDomain: string;
     const env = process.env.NODE_ENV;
@@ -30,8 +27,14 @@ export default function Login() {
 
     // for logging in
     const handle_login = async () => {
+        const email =
+            (document.querySelector("#email-input") as HTMLInputElement).value;
+        const password =
+            (document.querySelector("#password-input") as HTMLInputElement)
+                .value;
+
         if (email === "" || password === "") {
-            toast("Please fill in all fields.", {
+            toast.error("Please fill in all fields.", {
                 description: "Email or password is empty.",
                 action: {
                     label: "Okay",
@@ -43,7 +46,7 @@ export default function Login() {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            toast("Invalid email.", {
+            toast.error("Invalid email.", {
                 description: "Email is invalid.",
                 action: {
                     label: "Okay",
@@ -63,7 +66,7 @@ export default function Login() {
         });
 
         if (res.status === 401) {
-            toast("Incorrect credentials.", {
+            toast.error("Incorrect credentials.", {
                 description: "Email or password is incorrect.",
                 action: {
                     label: "Okay",
@@ -72,7 +75,7 @@ export default function Login() {
             });
             return;
         } else if (res.status === 404) {
-            toast("User not found.", {
+            toast.error("User not found.", {
                 description: "User does not exist. Register instead.",
                 action: {
                     label: "Okay",
@@ -81,7 +84,7 @@ export default function Login() {
             });
             return;
         } else if (res.status === 200) {
-            toast("Login successful.", {
+            toast.success("Login successful.", {
                 description: "You have successfully logged in.",
                 action: {
                     label: "Okay",
@@ -117,8 +120,7 @@ export default function Login() {
                         </label>
                         <Input
                             type="email"
-                            onChange={(e) => setEmail(e.target.value)}
-                            onFocus={(e) => setEmail(e.target.value)}
+                            id="email-input"
                         />
                     </div>
                     <div className="grid gap-1">
@@ -127,7 +129,7 @@ export default function Login() {
                         </label>
                         <Input
                             type="password"
-                            onChange={(e) => setPassword(e.target.value)}
+                            id="password-input"
                         />
                     </div>
                 </CardContent>

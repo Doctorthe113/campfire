@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EditDialog } from "@/components/edit-dialog";
 import { ConfirmationDialog } from "@/components/confirmationDialog";
+import Image from "next/image";
 
 type Message = {
     id: string;
@@ -58,7 +59,7 @@ export default function ChatInterface(
 
     // checks if the message is too long
     if (msgContent.length > 2000) {
-        toast("Message too long.", {
+        toast.error("Message too long.", {
             action: {
                 label: "Okay",
                 onClick: () => {},
@@ -85,7 +86,7 @@ export default function ChatInterface(
         ) as HTMLTextAreaElement;
 
         if (msgContent.length > 2000) {
-            toast("Message too long.", {
+            toast.error("Message too long.", {
                 action: {
                     label: "Okay",
                     onClick: () => {},
@@ -107,7 +108,7 @@ export default function ChatInterface(
                     }),
             );
         } catch {
-            toast("Failed to send message.", {
+            toast.error("Failed to send message.", {
                 action: {
                     label: "Okay",
                     onClick: () => {},
@@ -216,31 +217,24 @@ export default function ChatInterface(
         _();
 
         // sets up websocket
-        const ws = new WebSocket(
-            `wss://${apiDomain}/ws?guild_id=${guildId}&user_id=${userId}`,
-        );
+        try {
+            const ws = new WebSocket(
+                `wss://${apiDomain}/ws?guild_id=${guildId}&user_id=${userId}`,
+            );
 
-        ws.onopen = () => {
-            // ? not sure if i should sent a toast
-            // toast("Connected to websocket.", {
-            //     action: {
-            //         label: "Okay",
-            //         onClick: () => {},
-            //     },
-            // });
-            console.log("Connected to websocket.");
-        };
+            ws.onopen = () => {
+                console.log("Connected to websocket.");
+            };
 
-        if (!ws) {
-            toast("Failed to connect to websocket.", {
+            setWs(ws);
+        } catch {
+            toast.error("Failed to connect to websocket.", {
                 action: {
                     label: "Okay",
                     onClick: () => {},
                 },
             });
         }
-
-        setWs(ws);
         setIsloaded(true);
     }, []);
 
@@ -263,10 +257,11 @@ export default function ChatInterface(
                                     <img
                                         src={message.avatar}
                                         alt=""
-                                        className="w-10 h-10 rounded-sm"
+                                        width={200}
+                                        height={200}
+                                        className="w-11 h-11 rounded-sm"
                                         key={`message-avatar${message.id}`}
-                                    >
-                                    </img>
+                                    />
                                     <div
                                         className={`flex flex-col w-max max-w-9/12 ${
                                             message.author_id === userId

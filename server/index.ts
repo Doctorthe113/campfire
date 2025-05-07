@@ -389,19 +389,93 @@ async function handle_get_user(req: BunRequest) {
     return corsResponse("*", user, 200);
 }
 
-// get - has auth
+// post - has auth
 async function handle_profile_update(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
 
+    if (req.method === "OPTIONS") {
+        return handle_preflight(origin);
+    }
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "User is not authenticated", 403);
+    }
+
+    //@ts-ignore
+    const userId = req.cookies.get("user_id") as string;
+    const { status, avatar } = await req.json();
+
+    const result = db.update_profile(status, avatar, userId);
+    if (result.changes === 0) {
+        return corsResponse(origin, "Invalid operation", 403);
+    }
+
+    return corsResponse(origin, "Updated profile", 200);
 }
 
-// get -has auth
+// post -has auth
 async function handle_account_update(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
 
+    if (req.method === "OPTIONS") {
+        return handle_preflight(origin);
+    }
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "User is not authenticated", 403);
+    }
+
+    //@ts-ignore
+    const cookies = req.cookies;
+    const userId = cookies.get("user_id") as string;
+    const { username, email } = await req.json();
+    try {
+        const result = db.update_account(email, username, userId);
+        if (result.changes === 0) {
+            return corsResponse(origin, "Invalid operation", 403);
+        }
+
+        return corsResponse(origin, "Updated account", 200);
+    } catch {
+        return corsResponse(origin, "Invalid operation", 401);
+    }
 }
 
-// get - has auth
+// post - has auth
 async function handle_password_update(req: BunRequest) {
+    const origin = req.headers.get("Origin") as string;
 
+    if (req.method === "OPTIONS") {
+        return handle_preflight(origin);
+    }
+
+    const isAuthenticated = await verify_auth(req);
+    if (!isAuthenticated) {
+        return corsResponse(origin, "User is not authenticated", 403);
+    }
+
+    //@ts-ignore
+    const cookies = req.cookies;
+    const userId = cookies.get("user_id") as string;
+    const userEmail = cookies.get("user_email") as string;
+    const { oldPassword, newPassword } = await req.json();
+
+    const user: User = db.get_user(userEmail);
+    const isPasswordValid = await pass.verify(oldPassword, user.password);
+
+    if (!isPasswordValid) {
+        return corsResponse(origin, "Invalid password", 403);
+    }
+
+    const hashedPassword = await pass.hash(newPassword);
+    const result = db.update_password(user.password, hashedPassword, userId);
+    if (result.changes === 0) {
+        return corsResponse(origin, "Invalid operation", 400);
+    }
+
+    return corsResponse(origin, "Updated password", 200);
 }
 
 // get - validates the token for nextjs
@@ -679,6 +753,9 @@ const server = Bun.serve({
         "/grab_old_msgs": handle_get_messages, // get
         "/ws": handle_ws, // get
         "/get_user": handle_get_user, // get
+        "/update_profile": handle_profile_update, // post
+        "/update_account": handle_account_update, // post
+        "/update_password": handle_password_update, // post
         "/register": handle_register, // post
         "/login": handle_login, // post
         "/validate_auth": handle_validate_auth, // local connection // get

@@ -220,18 +220,31 @@ export default class DB {
         );
     }
 
-    // todo: make it accept all or any changes
-    update_user(user: User) {
+    update_profile(status: string, avatar: string, id: string) {
         const updateStatment = this.db.prepare(
-            "UPDATE users SET username = ?, email = ?, password = ?, avatar = ? WHERE id = ?",
+            "UPDATE users SET status = ?, avatar = ? WHERE id = ?",
         );
-        updateStatment.run(
-            user.username,
-            user.email,
-            user.password,
-            user.avatar,
-            user.id,
+        return updateStatment.run(status, avatar, id);
+    }
+
+    update_account(email: string, username: string, id: string) {
+        const updateStatment = this.db.prepare(
+            "UPDATE users SET email = ?, username = ? WHERE id = ?",
         );
+
+        return updateStatment.run(email, username, id);
+    }
+
+    update_password(
+        oldPasswordHash: string,
+        newPasswordHash: string,
+        id: string,
+    ) {
+        const updateStatment = this.db.prepare(
+            "UPDATE users SET password = ? WHERE id = ? AND password = ?",
+        );
+
+        return updateStatment.run(newPasswordHash, id, oldPasswordHash);
     }
 
     get_user(email: string) {

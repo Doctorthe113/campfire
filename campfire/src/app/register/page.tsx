@@ -31,7 +31,7 @@ export default function Login() {
 
     const handle_register = async () => {
         if (email === "" || password === "" || username === "") {
-            toast("Please fill in all fields.", {
+            toast.error("Please fill in all fields.", {
                 description: "Email, username or password is empty.",
                 action: {
                     label: "Okay",
@@ -42,7 +42,7 @@ export default function Login() {
         }
 
         if (password.length < 8) {
-            toast("Password too short.", {
+            toast.error("Password too short.", {
                 description: "Password must be at least 8 characters long.",
                 action: {
                     label: "Okay",
@@ -54,7 +54,7 @@ export default function Login() {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            toast("Invalid email.", {
+            toast.error("Invalid email.", {
                 description: "Email is invalid.",
                 action: {
                     label: "Okay",
@@ -82,7 +82,7 @@ export default function Login() {
         if (res.status === 200) {
             redirect("/login");
         } else if (res.status === 403) {
-            toast("Failed to register.", {
+            toast.error("Failed to register.", {
                 description: "Email or username is already in use.",
                 action: {
                     label: "Okay",

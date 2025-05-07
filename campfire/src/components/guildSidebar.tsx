@@ -66,14 +66,14 @@ export async function GuildSidebar(
                         <SidebarMenuButton className="" asChild>
                             <div className="flex h-full m-0 items-center w-full px-2 py-1 border-none">
                                 <Image
-                                    src={userInfo.avatar as string}
                                     id="avatar-img"
-                                    width={128}
-                                    height={128}
+                                    className="inline object-cover rounded-sm h-12 w-12"
+                                    src={userInfo.avatar as string}
                                     alt=""
-                                    className="inline rounded-sm h-12 w-12"
-                                >
-                                </Image>
+                                    width={200}
+                                    height={200}
+                                    decoding="async"
+                                />
                                 <div className="flex flex-col h-14 justify-between pl-2 py-1 grow">
                                     <span className="font-bold text-primary text-lg w-full m-0 h-5 leading-tight text-right">
                                         {userInfo.username}
@@ -152,7 +152,7 @@ export async function GuildSidebar(
                                 key={guild.id}
                                 className={`m-0 p-0 px-1 active:scale-90 active:bg-background active:rounded-sm duration-10 hover:rounded-sm md:rounded-sm rounded-none hover:bg-background hover:border-foreground h-fit flex items-center btn ${
                                     currentGuildName === guild.name
-                                        ? "bg-background"
+                                        ? "bg-background hover:bg-accent"
                                         : ""
                                 }`}
                                 id={`sidebar-menu-item-${guild.id}`}

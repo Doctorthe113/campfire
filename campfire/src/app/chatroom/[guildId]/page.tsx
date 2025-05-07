@@ -78,7 +78,7 @@ export default async function Chatroom(
             />
             <SidebarInset>
                 <main className="rounded-lg m-2 flex flex-col grow min-h-0">
-                    <header className="shadow-[0px_10px_8px_-4px_rgba(0,0,0,1)] z-10 shadow-background group-has-data-[collapsible=icon]/sidebar-wrapper:h-8 flex h-8 shrink-0 items-center gap-2 border-b border-b-secondary transition-[width,height] ease-linear">
+                    <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-8 flex h-8 shrink-0 items-center gap-2 border-b border-b-secondary transition-[width,height] ease-linear">
                         <SidebarTrigger className="ml-1" />
                         <Separator
                             orientation="vertical"

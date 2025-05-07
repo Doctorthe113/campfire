@@ -15,7 +15,7 @@ export default function InviteCopy({ guildId }: { guildId: string }) {
             `${domain}/api/invite?guild_id=${guildId}`,
         );
 
-        toast("Copied invite link to clipboard.", {
+        toast.success("Copied invite link to clipboard.", {
             description: `${domain}/api/invite?guild_id=${guildId}`,
             action: {
                 label: "Okay",
