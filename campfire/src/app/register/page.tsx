@@ -10,16 +10,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { redirect } from "next/navigation";
 
 export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [username, setUsername] = useState("");
-
     // sets api url based on env
     let apiDomain: string;
     const env = process.env.NODE_ENV;
@@ -30,6 +25,15 @@ export default function Login() {
     }
 
     const handle_register = async () => {
+        const email =
+            (document.querySelector("#email-input") as HTMLInputElement).value;
+        const username =
+            (document.querySelector("#username-input") as HTMLInputElement)
+                .value;
+        const password =
+            (document.querySelector("#password-input") as HTMLInputElement)
+                .value;
+
         if (email === "" || password === "" || username === "") {
             toast.error("Please fill in all fields.", {
                 description: "Email, username or password is empty.",
@@ -39,6 +43,16 @@ export default function Login() {
                 },
             });
             return;
+        }
+
+        if (username.length > 16) {
+            toast.error("Username too long.", {
+                description: "Username must be at most 16 characters long.",
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
         }
 
         if (password.length < 8) {
@@ -117,7 +131,7 @@ export default function Login() {
                         </label>
                         <Input
                             type="email"
-                            onChange={(e) => setEmail(e.target.value)}
+                            id="email-input"
                         />
                     </div>
                     <div className="grid gap-1">
@@ -126,7 +140,7 @@ export default function Login() {
                         </label>
                         <Input
                             type="username"
-                            onChange={(e) => setUsername(e.target.value)}
+                            id="username-input"
                         />
                     </div>
                     <div className="grid gap-1">
@@ -135,7 +149,7 @@ export default function Login() {
                         </label>
                         <Input
                             type="password"
-                            onChange={(e) => setPassword(e.target.value)}
+                            id="password-input"
                         />
                     </div>
                 </CardContent>

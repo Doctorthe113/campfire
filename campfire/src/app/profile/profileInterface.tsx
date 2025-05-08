@@ -132,6 +132,17 @@ export default function ProfileInterface({ userInfo }: { userInfo: any }) {
             (document.querySelector("#username-input") as HTMLInputElement)
                 .value || userInfo.username;
 
+        if (newUsername.length > 16) {
+            toast.error("Username too long.", {
+                description: "Username must be at most 16 characters long.",
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
+            return;
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(newEmail)) {
             toast.error("Invalid email.", {
@@ -295,7 +306,7 @@ export default function ProfileInterface({ userInfo }: { userInfo: any }) {
                             className="w-fit text-secondary font-bold"
                             onClick={handle_profile_update}
                         >
-                            Update
+                            Update profile
                         </Button>
                     </div>
                     <Input
@@ -366,7 +377,7 @@ export default function ProfileInterface({ userInfo }: { userInfo: any }) {
                             className="w-fit text-secondary font-bold"
                             onClick={handle_account_update}
                         >
-                            Update
+                            Update account
                         </Button>
                     </div>
                 </div>
@@ -411,6 +422,36 @@ export default function ProfileInterface({ userInfo }: { userInfo: any }) {
                             onClick={handle_password_update}
                         >
                             Change password
+                        </Button>
+                    </div>
+                </div>
+                <Separator orientation="horizontal" />
+                <div className="flex w-full gap-4 my-6 justify-start">
+                    <div className="grow max-w-md flex flex-col gap-2">
+                        <h1 className="text-xl font-bold text-destructive">
+                            Delete account (WIP ⚠️)
+                        </h1>
+                        <h3 className="text-sm">
+                            Type in your email and username to procced with
+                            deletion. Be cautious, this action cannot be undone.
+                        </h3>
+                        <Input
+                            type="text"
+                            name="username"
+                            placeholder="Username"
+                            id="username-delete-input"
+                            autoComplete="new-password"
+                        />
+                        <Input
+                            type="text"
+                            name="email"
+                            placeholder="Email"
+                            id="email-delete-input"
+                            autoComplete="new-password"
+                        />
+                        <Button className="w-fit text-secondary font-bold bg-destructive" // onClick={handle_delete_update}
+                        >
+                            Delete account
                         </Button>
                     </div>
                 </div>

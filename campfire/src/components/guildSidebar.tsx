@@ -74,11 +74,11 @@ export async function GuildSidebar(
                                     height={200}
                                     decoding="async"
                                 />
-                                <div className="flex flex-col h-14 justify-between pl-2 py-1 grow">
+                                <div className="flex flex-col h-14 justify-between py-1 grow overflow-hidden text-ellipsis">
                                     <span className="font-bold text-primary text-lg w-full m-0 h-5 leading-tight text-right">
                                         {userInfo.username}
                                     </span>
-                                    <span className="text-[11px] w-full text-right m-0 grow leading-tight">
+                                    <span className="text-[10.5px] w-full text-right m-0 grow leading-tight">
                                         {userInfo.status}
                                     </span>
                                 </div>
@@ -94,25 +94,26 @@ export async function GuildSidebar(
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem className="focus:bg-background">
-                                <Link href="/profile" className="w-full">
+                            <DropdownMenuItem className="focus:bg-background p-0">
+                                <Link
+                                    href="/profile"
+                                    className="w-full h-full py-1 px-2"
+                                >
                                     User settings
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="focus:bg-background">
-                                <Link href="" className="w-full">
-                                    Change status ⚠️
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="focus:bg-background">
-                                <Link href="" className="w-full">
+                            <DropdownMenuItem className="focus:bg-background p-0">
+                                <Link
+                                    href=""
+                                    className="w-full h-full py-1 px-2"
+                                >
                                     Delete account ⚠️
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="focus:bg-background">
+                            <DropdownMenuItem className="focus:bg-background p-0">
                                 <Link
                                     href="/api/logout"
-                                    className="w-full"
+                                    className="w-full h-full py-1 px-2"
                                 >
                                     Logout
                                 </Link>
