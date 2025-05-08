@@ -434,6 +434,7 @@ export default function ProfileInterface({ userInfo }: { userInfo: any }) {
                         <h3 className="text-sm">
                             Type in your email and username to procced with
                             deletion. Be cautious, this action cannot be undone.
+                            Type your email and username again to confirm.
                         </h3>
                         <Input
                             type="text"

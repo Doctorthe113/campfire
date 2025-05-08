@@ -8,7 +8,7 @@ dist
 
 *.key
 *.crt
-
+db
 # code coverage
 coverage
 *.lcov

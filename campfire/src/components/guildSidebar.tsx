@@ -104,14 +104,6 @@ export async function GuildSidebar(
                             </DropdownMenuItem>
                             <DropdownMenuItem className="focus:bg-background p-0">
                                 <Link
-                                    href=""
-                                    className="w-full h-full py-1 px-2"
-                                >
-                                    Delete account ⚠️
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="focus:bg-background p-0">
-                                <Link
                                     href="/api/logout"
                                     className="w-full h-full py-1 px-2"
                                 >
