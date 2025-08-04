@@ -1,6 +1,9 @@
-a http server in bun js from scratch to learn about server side events, sql,
-sqlite, typescript, and how servers work in general
+## Campfire - A chatapp built entirely from scratch using std library from bun and nextjs
 
-a nextjs client to communicate with the backend
+This is NOT A PRODUCTION app, this is merely a proof of concept and a way for me to evaluate my skills and practice nextjs. This helped me learn sql, websockets, sse, image processing, authentication and more!
+
+Stay tuned for future projects!
 
 https://campfire.doctorthe113.com
+
+[!Campfire](/campfire/public/screenshot.png)
