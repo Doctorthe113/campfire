@@ -6,4 +6,4 @@ Stay tuned for future projects!
 
 https://campfire.doctorthe113.com
 
-[!Campfire](/campfire/public/screenshot.png)
+![Campfire](/campfire/public/screenshot.png)
