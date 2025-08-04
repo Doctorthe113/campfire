@@ -52,7 +52,7 @@ export function GuildPreference(
         <DropdownMenu>
             <DropdownMenuTrigger className="focus-visible:ring-0" asChild>
                 <Button className="w-6 h-6 bg-transparent border-none rounded-sm hover:bg-accent focus-visible:ring-0 active:border-none">
-                    <MoreHorizontal />
+                    <MoreHorizontal className="text-foreground" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

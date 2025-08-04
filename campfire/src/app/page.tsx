@@ -18,7 +18,7 @@ export default async function Home() {
     return (
         <main className="bg-background flex h-screen w-screen flex-col gap-3 items-center justify-start">
             <div
-                className="bg-card w-full flex justify-center p-1 sticky top-0"
+                className="bg-card w-full flex justify-center p-1 sticky top-0 shadow-[0px_16px_8px_-4px_rgba(0,0,0,1)] z-10 shadow-background"
                 id="header"
             >
                 <div className="flex justify-between w-full max-w-3xl">
@@ -145,7 +145,7 @@ export default async function Home() {
                     </div>
                     <div className="flex gap-2 ml-8">
                         <Checkbox
-                            checked={false}
+                            checked={true}
                             disabled
                             className="cursor-default disabled:opacity-100"
                             id="fourth-checkbox"
@@ -158,10 +158,25 @@ export default async function Home() {
                             Adding profile control/settings
                         </Label>
                     </div>
+                    <div className="flex gap-2 ml-8">
+                        <Checkbox
+                            checked={false}
+                            disabled
+                            className="cursor-default disabled:opacity-100"
+                            id="fifth-checkbox"
+                        >
+                        </Checkbox>
+                        <Label
+                            htmlFor="fifth-checkbox"
+                            className="text-foreground peer-disabled:opacity-100"
+                        >
+                            Adding custom theme support
+                        </Label>
+                    </div>
                 </Card>
                 <Card className="h-full w-full p-2 gap-1 leading-tight rounded-sm border-0">
                     <h1 className="font-sans text-xl font-bold">
-                        Supports all platforms
+                        Supports all platforms*
                     </h1>
                     <h3 className="text-sm grow">
                         Campfire is web based. It was originally designed for
@@ -174,6 +189,18 @@ export default async function Home() {
                     </div>
                 </Card>
             </div>
+            <Card className="h-max w-full max-w-3xl p-2 gap-1 flex flex-col justify-center items-center leading-tight rounded-sm border-border bg-background shadow-none">
+                <h1 className="font-sans text-xl font-bold w-3/4">
+                    Screenshots:
+                </h1>
+                <Image
+                    src="/screenshot.webp"
+                    alt="screenshot"
+                    width={800 * 2}
+                    height={660 * 2}
+                    className="shadow-[0_0_10px_rgba(0,0,0,0.4)] w-3/4 rounded-md"
+                />
+            </Card>
         </main>
     );
 }

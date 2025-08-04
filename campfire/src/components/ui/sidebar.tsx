@@ -264,7 +264,7 @@ function SidebarTrigger({
       variant="default"
       size="icon"
       className={cn(
-        "size-7 hover:text-foreground hover:bg-accent/100 bg-transparent",
+        "size-7 text-foreground hover:text-foreground hover:bg-accent/100 bg-transparent",
         className,
       )}
       onClick={(event) => {

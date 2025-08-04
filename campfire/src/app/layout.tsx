@@ -1,10 +1,10 @@
 import { ThemeProvider } from "next-themes";
-import { DM_Sans } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const customFont = DM_Sans({
+const customFont = Montserrat({
     subsets: ["latin"],
     weight: ["400", "700"],
     variable: "--font-custom",

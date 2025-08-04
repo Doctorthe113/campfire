@@ -18,15 +18,19 @@ type Message = {
     created_at: string;
 };
 
-export default function ChatInterface(
-    { guildId, username, userId, guildName, avatarUrl }: {
-        guildId: string;
-        username: string;
-        userId: string;
-        guildName: string;
-        avatarUrl: string;
-    },
-) {
+export default function ChatInterface({
+    guildId,
+    username,
+    userId,
+    guildName,
+    avatarUrl,
+}: {
+    guildId: string;
+    username: string;
+    userId: string;
+    guildName: string;
+    avatarUrl: string;
+}) {
     const [messages, setMessages] = useState([] as Array<Message>);
     const [ws, setWs] = useState(null as WebSocket | null);
     const [msgContent, setMsgContent] = useState("");
@@ -45,9 +49,7 @@ export default function ChatInterface(
     if (ws !== null) {
         ws.onmessage = (e) => {
             if (e.data.startsWith("message:")) {
-                const parsedMsg = JSON.parse(
-                    e.data.replace("message:", ""),
-                );
+                const parsedMsg = JSON.parse(e.data.replace("message:", ""));
                 if (parsedMsg.guild === guildId) {
                     setMessages((messages) => [...messages, parsedMsg]);
                 }
@@ -71,8 +73,17 @@ export default function ChatInterface(
     const grab_old_msgs = async (guildId: string) => {
         const messages = await fetch(
             `https://${apiDomain}/grab_old_msgs?guild_id=${guildId}`,
-            { credentials: "include", method: "GET" },
+            { credentials: "include", method: "GET" }
         );
+
+        if (messages.status !== 200) {
+            toast.error("Failed to grab old messages.", {
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
+        }
 
         return messages.json();
     };
@@ -82,8 +93,18 @@ export default function ChatInterface(
         e.preventDefault();
 
         const textArea = document.getElementById(
-            "chat-text-area",
+            "chat-text-area"
         ) as HTMLTextAreaElement;
+
+        if (msgContent.trim() === "") {
+            toast.error("Please enter a message.", {
+                action: {
+                    label: "Okay",
+                    onClick: () => {},
+                },
+            });
+            return;
+        }
 
         if (msgContent.length > 2000) {
             toast.error("Message too long.", {
@@ -105,7 +126,7 @@ export default function ChatInterface(
                         author_name: username,
                         content: msgContent,
                         avatar: avatarUrl,
-                    }),
+                    })
             );
         } catch {
             toast.error("Failed to send message.", {
@@ -128,7 +149,7 @@ export default function ChatInterface(
                     eventType: "delete",
                     guild: guildId,
                     id: msgId,
-                }),
+                })
         );
     };
 
@@ -136,7 +157,7 @@ export default function ChatInterface(
     const edit_message = async (
         e: any,
         msgId: string,
-        newMsgContent: string,
+        newMsgContent: string
     ) => {
         e.preventDefault();
 
@@ -155,7 +176,7 @@ export default function ChatInterface(
                     guild: guildId,
                     id: msgId,
                     content: newMsgContent,
-                }),
+                })
         );
     };
 
@@ -205,7 +226,7 @@ export default function ChatInterface(
     useEffect(() => {
         // changes focus to textarea
         const textArea = document.getElementById(
-            "chat-text-area",
+            "chat-text-area"
         ) as HTMLInputElement;
         textArea.focus();
 
@@ -219,12 +240,21 @@ export default function ChatInterface(
         // sets up websocket
         try {
             const ws = new WebSocket(
-                `wss://${apiDomain}/ws?guild_id=${guildId}&user_id=${userId}`,
+                `wss://${apiDomain}/ws?guild_id=${guildId}&user_id=${userId}`
             );
 
             ws.onopen = () => {
                 console.log("Connected to websocket.");
             };
+
+            if (!ws) {
+                toast.error("Failed to connect to websocket.", {
+                    action: {
+                        label: "Okay",
+                        onClick: () => {},
+                    },
+                });
+            }
 
             setWs(ws);
         } catch {
@@ -240,87 +270,81 @@ export default function ChatInterface(
 
     return (
         <div className="flex flex-col grow min-h-0">
-            {isLaoded
-                ? (
-                    <div className="grow w-full flex flex-col overflow-y-auto min-h-0 px-2">
-                        {messages.map((message: Message) => {
-                            return (
+            {isLaoded ? (
+                <div className="grow w-full flex flex-col overflow-y-auto min-h-0 px-2">
+                    {messages.map((message: Message) => {
+                        return (
+                            <div
+                                className={`flex w-full lg:max-w-2/3 my-1 gap-2 ${
+                                    message.author_id === userId
+                                        ? "ml-auto flex-row-reverse"
+                                        : ""
+                                }`}
+                                id={message.id}
+                                key={`message-div${message.id}`}
+                            >
+                                <img
+                                    src={message.avatar}
+                                    alt=""
+                                    width={200}
+                                    height={200}
+                                    className="w-11 h-11 rounded-sm"
+                                    key={`message-avatar${message.id}`}
+                                />
                                 <div
-                                    className={`flex w-full lg:max-w-2/3 my-1 gap-2 ${
+                                    className={`flex flex-col w-max max-w-9/12 ${
                                         message.author_id === userId
-                                            ? "ml-auto flex-row-reverse"
-                                            : ""
-                                    }`}
-                                    id={message.id}
-                                    key={`message-div${message.id}`}
+                                            ? "bg-accent"
+                                            : "bg-muted"
+                                    } px-2 rounded-sm py-0.5`}
+                                    key={`message-body-div${message.id}`}
                                 >
-                                    <img
-                                        src={message.avatar}
-                                        alt=""
-                                        width={200}
-                                        height={200}
-                                        className="w-11 h-11 rounded-sm"
-                                        key={`message-avatar${message.id}`}
-                                    />
-                                    <div
-                                        className={`flex flex-col w-max max-w-9/12 ${
-                                            message.author_id === userId
-                                                ? "bg-accent"
-                                                : "bg-muted"
-                                        } px-2 rounded-sm py-0.5`}
-                                        key={`message-body-div${message.id}`}
-                                    >
-                                        <div className="text-sm flex items-center">
-                                            <span className="text-accent-foreground">
-                                                {message.author_name}
-                                            </span>
-                                            <span className="min-w-4 text-center">
-                                                -
-                                            </span>
-                                            <span className="text-muted-foreground text-xs min-w-34">
-                                                {format_time(
-                                                    message.created_at,
-                                                )}
-                                            </span>
-                                        </div>
-                                        <pre className="text-sm font-sans2 leading-tight wrap-anywhere text-wrap">
-                                    {message.content}
-                                        </pre>
+                                    <div className="text-sm flex items-center">
+                                        <span className="text-accent-foreground">
+                                            {message.author_name}
+                                        </span>
+                                        <span className="min-w-4 text-center">
+                                            -
+                                        </span>
+                                        <span className="text-muted-foreground text-xs min-w-34">
+                                            {format_time(message.created_at)}
+                                        </span>
                                     </div>
-                                    {message.author_id === userId
-                                        ? (
-                                            <>
-                                                <ConfirmationDialog
-                                                    confirmationMsg="Do you want to delete this message?"
-                                                    confirmationFunction={() =>
-                                                        delete_message(
-                                                            message.id,
-                                                        )}
-                                                >
-                                                    <Button
-                                                        variant={"outline"}
-                                                        id={`delete-btn-${message.id}`}
-                                                        className={"w-6 h-6 rounded-sm border-0 text-destructive"}
-                                                    >
-                                                        <Trash2 />
-                                                    </Button>
-                                                </ConfirmationDialog>
-                                                <EditDialog
-                                                    msgId={message.id}
-                                                    updateMessage={edit_message}
-                                                />
-                                            </>
-                                        )
-                                        : null}
+                                    <pre className="text-sm font-sans2 leading-tight wrap-anywhere text-wrap">
+                                        {message.content}
+                                    </pre>
                                 </div>
-                            );
-                        })}
-                    </div>
-                )
-                : (
-                    <div className="grow w-full flex flex-col overflow-y-auto min-h-0">
-                    </div>
-                )}
+                                {message.author_id === userId ? (
+                                    <>
+                                        <ConfirmationDialog
+                                            confirmationMsg="Do you want to delete this message?"
+                                            confirmationFunction={() =>
+                                                delete_message(message.id)
+                                            }
+                                        >
+                                            <Button
+                                                variant={"outline"}
+                                                id={`delete-btn-${message.id}`}
+                                                className={
+                                                    "w-6 h-6 rounded-sm border-0 text-destructive"
+                                                }
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </ConfirmationDialog>
+                                        <EditDialog
+                                            msgId={message.id}
+                                            updateMessage={edit_message}
+                                        />
+                                    </>
+                                ) : null}
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="grow w-full flex flex-col overflow-y-auto min-h-0"></div>
+            )}
             <form
                 className="w-full max-h-28 h-fit flex mt-2 sticky bottom-0 bg-background"
                 onSubmit={send_message}
@@ -338,8 +362,7 @@ export default function ChatInterface(
                             send_message(e); // Manually trigger send_message
                         }
                     }}
-                >
-                </Textarea>
+                ></Textarea>
                 <Button
                     type="submit"
                     className="min-h-12 max-h-[66px] h-full text-secondary font-bold"
