@@ -1,0 +1,14 @@
+[Unit]
+Description=Campfire
+
+[Service]
+WorkingDirectory=/root/projects/campfire
+ExecStart=/root/projects/campfire/start.sh
+Restart=always
+User=root
+RestartSec=5s
+StandardOutput=append:/root/projects/campfire/output.log
+StandardError=append:/root/projects/campfire/errors.log
+
+[Install]
+WantedBy=multi-user.target
